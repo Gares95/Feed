@@ -44,7 +44,7 @@ Mutations (mark read/star) -> Server Actions -> update SQLite -> optimistic UI u
 - Tailwind CSS v4, shadcn/ui (New York style), Lucide icons
 - react-resizable-panels for three-pane layout
 - Prisma 6 + SQLite (single file DB at prisma/dev.db)
-- rss-parser for RSS/Atom parsing, isomorphic-dompurify for HTML sanitization
+- rss-parser for RSS/Atom parsing, dompurify + jsdom for server-side HTML sanitization
 - date-fns for date formatting
 - Vitest + React Testing Library
 
