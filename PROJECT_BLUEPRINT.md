@@ -430,8 +430,8 @@ These are things we are **intentionally avoiding**:
 ### Phase 2 — Organization & Search
 
 - [ ] Feed folders / categories (drag feeds into folders)
-- [ ] OPML import and export
-- [ ] Full-text search via SQLite FTS5
+- [x] OPML import and export
+- [x] Full-text search via SQLite FTS5
 - [ ] Command palette (`cmdk`) for quick navigation
 - [ ] Auto-refresh on configurable interval (per-feed or global)
 - [ ] Mark all as read (per feed, per folder, all)
