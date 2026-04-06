@@ -10,6 +10,7 @@ npm run dev         # Dev server with Turbopack on http://localhost:3000
 npm run build       # Production build
 npm run lint        # ESLint
 npm run test        # Vitest test suite
+npm run test:watch  # Vitest in watch mode
 npx vitest run path/to/test.ts  # Run a single test file
 npx prisma studio   # Browse database in GUI
 npx prisma migrate dev --name <name>  # Create a new migration after schema changes
@@ -24,6 +25,7 @@ Feed is a local-first RSS/Atom reader. No auth, no cloud, no API keys. SQLite st
 ```
 Add feed URL -> POST /api/feeds -> server-side fetch RSS -> parse XML -> sanitize HTML -> store in SQLite
 Read articles -> Server Components query Prisma -> render three-pane layout
+Single article -> GET /api/articles/[id] -> full content for reading pane
 Mutations (mark read/star) -> Server Actions -> update SQLite -> optimistic UI update
 ```
 
@@ -60,6 +62,12 @@ Mutations (mark read/star) -> Server Actions -> update SQLite -> optimistic UI u
 Dark-mode-first. CSS variables use oklch color space. See `globals.css` for the full token system. Light mode is secondary.
 
 Three-pane resizable layout: sidebar (feeds, 240-280px) | article list (300-400px) | reading pane (remaining).
+
+## Hooks
+
+PostToolUse hooks run automatically after every file edit:
+- **Prettier** — auto-formats the changed file (no need to format manually)
+- **TypeScript type checker** — runs `tsc` and reports errors immediately
 
 ## Code Conventions
 
