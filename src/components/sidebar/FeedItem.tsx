@@ -23,10 +23,18 @@ export function FeedItem({
   onDelete,
 }: FeedItemProps) {
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onSelect(id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(id);
+        }
+      }}
       className={cn(
-        "group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+        "group flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
         isSelected
           ? "bg-accent text-accent-foreground"
           : "hover:bg-accent/50 text-foreground"
@@ -54,6 +62,6 @@ export function FeedItem({
       >
         <Trash2 className="h-3.5 w-3.5" />
       </button>
-    </button>
+    </div>
   );
 }
