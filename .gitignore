@@ -42,3 +42,8 @@ next-env.d.ts
 
 # Windows Zone.Identifier metadata
 *:Zone.Identifier
+
+# Prisma
+/src/generated/prisma
+prisma/dev.db
+prisma/dev.db-journal
