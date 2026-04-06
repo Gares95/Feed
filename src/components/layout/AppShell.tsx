@@ -18,7 +18,13 @@ import {
 } from "@/components/reader/ReadingPane";
 import { deleteFeed } from "@/actions/feeds";
 import { refreshAllFeeds } from "@/actions/feeds";
-import { markRead, toggleStar, searchArticles } from "@/actions/articles";
+import {
+  markRead,
+  markUnread,
+  toggleStar,
+  searchArticles,
+} from "@/actions/articles";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 interface AppShellProps {
   feeds: FeedWithCount[];
@@ -173,6 +179,53 @@ export function AppShell({
     }
   }
 
+  const displayedArticles = searchResults ?? articles;
+
+  useKeyboardShortcuts({
+    onNextArticle: () => {
+      const currentIndex = displayedArticles.findIndex(
+        (a) => a.id === selectedArticleId,
+      );
+      const nextIndex = currentIndex + 1;
+      if (nextIndex < displayedArticles.length) {
+        handleSelectArticle(displayedArticles[nextIndex].id);
+      }
+    },
+    onPrevArticle: () => {
+      const currentIndex = displayedArticles.findIndex(
+        (a) => a.id === selectedArticleId,
+      );
+      const prevIndex = currentIndex - 1;
+      if (prevIndex >= 0) {
+        handleSelectArticle(displayedArticles[prevIndex].id);
+      }
+    },
+    onToggleStar: () => {
+      if (selectedArticleId) handleToggleStar(selectedArticleId);
+    },
+    onToggleRead: async () => {
+      if (!selectedArticleId) return;
+      const article = displayedArticles.find(
+        (a) => a.id === selectedArticleId,
+      );
+      if (article) {
+        if (article.isRead) {
+          await markUnread(selectedArticleId);
+        } else {
+          await markRead(selectedArticleId);
+        }
+        refresh();
+      }
+    },
+    onRefresh: () => refresh(),
+    onRefreshAll: () => handleRefreshAll(),
+    onOpenOriginal: () => {
+      if (currentArticle?.link) {
+        window.open(currentArticle.link, "_blank", "noopener,noreferrer");
+      }
+    },
+  });
+
   const heading = isStarredView
     ? "Starred"
     : selectedFeedId
@@ -213,7 +266,7 @@ export function AppShell({
           className="bg-background"
         >
           <ArticleList
-            articles={searchResults ?? articles}
+            articles={displayedArticles}
             selectedArticleId={selectedArticleId}
             onSelectArticle={handleSelectArticle}
             heading={heading}
