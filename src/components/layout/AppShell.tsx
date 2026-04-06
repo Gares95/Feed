@@ -145,12 +145,12 @@ export function AppShell({
 
   return (
     <div className="h-screen w-screen overflow-hidden">
-      <ResizablePanelGroup orientation="horizontal">
+      <ResizablePanelGroup orientation="horizontal" id="app-layout">
         <ResizablePanel
-          defaultSize={20}
-          minSize={15}
-          maxSize={30}
-          collapsible
+          id="sidebar"
+          defaultSize="20%"
+          minSize="200px"
+          maxSize="30%"
           className="bg-card"
         >
           <Sidebar
@@ -171,8 +171,9 @@ export function AppShell({
         <ResizableHandle />
 
         <ResizablePanel
-          defaultSize={30}
-          minSize={20}
+          id="article-list"
+          defaultSize="30%"
+          minSize="250px"
           className="bg-background"
         >
           <ArticleList
@@ -185,7 +186,7 @@ export function AppShell({
 
         <ResizableHandle />
 
-        <ResizablePanel defaultSize={50} minSize={30} className="bg-background">
+        <ResizablePanel id="reading-pane" defaultSize="50%" minSize="400px" className="bg-background">
           <ReadingPane
             article={currentArticle}
             onToggleStar={handleToggleStar}
