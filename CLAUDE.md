@@ -69,6 +69,42 @@ Three-pane resizable layout: sidebar (feeds, 240-280px) | article list (300-400p
 - No prop drilling beyond 2 levels — use Context or Server Components
 - Prisma client singleton in `lib/prisma.ts`
 
+## Git Workflow
+
+### Branching Strategy
+
+Always work on a dedicated branch — never commit directly to `main`.
+
+| Prefix | Purpose | Example |
+|---|---|---|
+| `feature/` | New functionality | `feature/add-feed-dialog` |
+| `fix/` | Bug fixes | `fix/unread-count-off-by-one` |
+| `hotfix/` | Urgent production fixes | `hotfix/crash-on-empty-feed` |
+| `refactor/` | Code improvements (no behavior change) | `refactor/extract-feed-parser` |
+| `chore/` | Tooling, config, deps | `chore/update-prisma-6` |
+
+Merge to `main` when the branch work is complete and verified. Use `--no-ff` merges to preserve branch history.
+
+### Commit Practices
+
+- **Commit early, commit often** — each commit should represent one logical change
+- **Stage and commit after each meaningful step** — don't batch unrelated changes
+- Keep commits small and focused: separate new features, bug fixes, refactors, and config changes
+- Write descriptive messages in imperative mood: "Add feed parser" not "Added feed parser"
+- Format: short summary line (≤72 chars), blank line, optional body explaining *why*
+- Never commit generated files (node_modules/, .next/, prisma/dev.db), secrets, or build artifacts
+
+### Typical Flow
+
+```bash
+git checkout -b feature/my-feature    # Branch from main
+# ... work and commit incrementally ...
+git checkout main
+git merge --no-ff feature/my-feature  # Merge when complete
+git push
+git branch -d feature/my-feature      # Clean up local branch
+```
+
 ## Reference
 
 See `PROJECT_BLUEPRINT.md` for full specification: phased roadmap, detailed design tokens, database schema, keyboard shortcuts, and UI/UX direction.
