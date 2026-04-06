@@ -67,7 +67,7 @@ Three-pane resizable layout: sidebar (feeds, 240-280px) | article list (300-400p
 - `cn()` utility (clsx + tailwind-merge) for conditional classes
 - Props interfaces defined in the same file as the component
 - No prop drilling beyond 2 levels — use Context or Server Components
-- Prisma client singleton in `lib/prisma.ts`
+- Prisma client singleton in `lib/prisma.ts` — import from `@/generated/prisma` (custom output path)
 
 ## Git Workflow
 
