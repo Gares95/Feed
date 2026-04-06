@@ -1,3 +1,4 @@
+import { Prisma } from "@/generated/prisma";
 import { prisma } from "./prisma";
 
 export async function getFeedsWithCounts() {
@@ -63,6 +64,51 @@ export async function getArticleById(id: string) {
     isStarred: article.isStarred,
     feedTitle: article.feed.title,
   };
+}
+
+export async function searchArticles(query: string) {
+  if (!query.trim()) return [];
+
+  // Escape FTS5 special characters and add prefix matching
+  const sanitized = query.replace(/['"*^~(){}[\]]/g, "").trim();
+  if (!sanitized) return [];
+
+  const ftsQuery = sanitized
+    .split(/\s+/)
+    .map((term) => `"${term}"*`)
+    .join(" ");
+
+  const results = await prisma.$queryRaw<
+    {
+      id: string;
+      title: string;
+      feedTitle: string;
+      publishedAt: Date;
+      isRead: boolean;
+      isStarred: boolean;
+    }[]
+  >(Prisma.sql`
+    SELECT
+      a.id,
+      a.title,
+      f.title AS feedTitle,
+      a.publishedAt,
+      a.isRead,
+      a.isStarred
+    FROM ArticleFts fts
+    JOIN Article a ON a.rowid = fts.rowid
+    JOIN Feed f ON f.id = a.feedId
+    WHERE ArticleFts MATCH ${ftsQuery}
+    ORDER BY rank
+    LIMIT 100
+  `);
+
+  return results.map((r) => ({
+    ...r,
+    isRead: Boolean(r.isRead),
+    isStarred: Boolean(r.isStarred),
+    publishedAt: new Date(r.publishedAt),
+  }));
 }
 
 export async function getStarredCount() {

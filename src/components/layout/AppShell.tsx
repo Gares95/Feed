@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useTransition } from "react";
+import { useState, useCallback, useTransition, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ResizablePanelGroup,
@@ -18,7 +18,7 @@ import {
 } from "@/components/reader/ReadingPane";
 import { deleteFeed } from "@/actions/feeds";
 import { refreshAllFeeds } from "@/actions/feeds";
-import { markRead, toggleStar } from "@/actions/articles";
+import { markRead, toggleStar, searchArticles } from "@/actions/articles";
 
 interface AppShellProps {
   feeds: FeedWithCount[];
@@ -48,6 +48,42 @@ export function AppShell({
     initialArticle
   );
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<ArticleWithFeed[] | null>(
+    null,
+  );
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleSearchChange(query: string) {
+    setSearchQuery(query);
+
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+
+    if (!query.trim()) {
+      setSearchResults(null);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    searchTimerRef.current = setTimeout(async () => {
+      try {
+        const results = await searchArticles(query);
+        setSearchResults(results);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, []);
 
   const refresh = useCallback(() => {
     startTransition(() => {
@@ -177,10 +213,13 @@ export function AppShell({
           className="bg-background"
         >
           <ArticleList
-            articles={articles}
+            articles={searchResults ?? articles}
             selectedArticleId={selectedArticleId}
             onSelectArticle={handleSelectArticle}
             heading={heading}
+            searchQuery={searchQuery}
+            onSearchChange={handleSearchChange}
+            isSearching={isSearching}
           />
         </ResizablePanel>
 

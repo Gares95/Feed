@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { searchArticles as searchArticlesQuery } from "@/lib/queries";
 
 export async function markRead(articleId: string) {
   await prisma.article.update({
@@ -31,6 +32,10 @@ export async function toggleStar(articleId: string) {
     data: { isStarred: !article.isStarred },
   });
   revalidatePath("/");
+}
+
+export async function searchArticles(query: string) {
+  return searchArticlesQuery(query);
 }
 
 export async function markAllRead(feedId?: string) {
