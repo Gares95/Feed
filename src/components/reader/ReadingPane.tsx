@@ -3,6 +3,10 @@
 import { BookOpen } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArticleHeader } from "./ArticleHeader";
+import {
+  TypographySettings,
+  useTypography,
+} from "./TypographySettings";
 
 export interface ArticleFull {
   id: string;
@@ -21,6 +25,8 @@ interface ReadingPaneProps {
 }
 
 export function ReadingPane({ article, onToggleStar }: ReadingPaneProps) {
+  const { config, update } = useTypography();
+
   if (!article) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
@@ -31,22 +37,35 @@ export function ReadingPane({ article, onToggleStar }: ReadingPaneProps) {
   }
 
   return (
-    <ScrollArea className="h-full">
-      <article className="mx-auto max-w-2xl px-8 py-8">
-        <ArticleHeader
-          title={article.title}
-          author={article.author}
-          publishedAt={article.publishedAt}
-          feedTitle={article.feedTitle}
-          link={article.link}
-          isStarred={article.isStarred}
-          onToggleStar={() => onToggleStar(article.id)}
-        />
-        <div
-          className="article-content mt-6"
-          dangerouslySetInnerHTML={{ __html: article.content }}
-        />
-      </article>
-    </ScrollArea>
+    <div className="flex h-full flex-col">
+      <div className="flex h-8 items-center justify-end border-b px-3">
+        <TypographySettings config={config} onUpdate={update} />
+      </div>
+      <ScrollArea className="flex-1">
+        <article
+          className="mx-auto px-8 py-8"
+          style={{ maxWidth: `${config.maxWidth}px` }}
+        >
+          <ArticleHeader
+            title={article.title}
+            author={article.author}
+            publishedAt={article.publishedAt}
+            feedTitle={article.feedTitle}
+            link={article.link}
+            content={article.content}
+            isStarred={article.isStarred}
+            onToggleStar={() => onToggleStar(article.id)}
+          />
+          <div
+            className="article-content mt-6"
+            style={{
+              fontSize: `${config.fontSize}px`,
+              lineHeight: config.lineHeight,
+            }}
+            dangerouslySetInnerHTML={{ __html: article.content }}
+          />
+        </article>
+      </ScrollArea>
+    </div>
   );
 }
