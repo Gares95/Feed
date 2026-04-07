@@ -1,6 +1,7 @@
 import { Prisma } from "@/generated/prisma";
 import { prisma } from "./prisma";
 import { buildFtsQuery } from "./fts-query";
+import { highlightCodeBlocks } from "./highlight-code";
 
 export async function getFeedsWithCounts() {
   const feeds = await prisma.feed.findMany({
@@ -71,7 +72,7 @@ export async function getArticleById(id: string) {
   return {
     id: article.id,
     title: article.title,
-    content: article.content,
+    content: highlightCodeBlocks(article.content),
     link: article.link,
     author: article.author,
     publishedAt: article.publishedAt,
