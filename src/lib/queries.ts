@@ -18,6 +18,7 @@ export async function getFeedsWithCounts() {
     unreadCount: feed._count.articles,
     errorCount: feed.errorCount,
     lastFetched: feed.lastFetched,
+    refreshInterval: feed.refreshInterval,
   }));
 }
 

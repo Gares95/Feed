@@ -16,6 +16,7 @@ export interface FeedWithCount {
   unreadCount: number;
   errorCount: number;
   lastFetched: Date | null;
+  refreshInterval: number | null;
 }
 
 interface SidebarProps {
@@ -27,6 +28,7 @@ interface SidebarProps {
   onSelectStarred: () => void;
   onDeleteFeed: (feedId: string) => void;
   onRefreshFeed: (feedId: string) => void;
+  onUpdateFeed: () => void;
   onRefreshAll: () => void;
   onFeedAdded: () => void;
   isStarredView: boolean;
@@ -42,6 +44,7 @@ export function Sidebar({
   onSelectStarred,
   onDeleteFeed,
   onRefreshFeed,
+  onUpdateFeed,
   onRefreshAll,
   onFeedAdded,
   isStarredView,
@@ -126,10 +129,12 @@ export function Sidebar({
                   unreadCount={feed.unreadCount}
                   favicon={feed.favicon}
                   errorCount={feed.errorCount}
+                  refreshInterval={feed.refreshInterval}
                   isSelected={selectedFeedId === feed.id && !isStarredView}
                   onSelect={onSelectFeed}
                   onDelete={onDeleteFeed}
                   onRefresh={onRefreshFeed}
+                  onUpdated={onUpdateFeed}
                 />
               ))}
             </div>

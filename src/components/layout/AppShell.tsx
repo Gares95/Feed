@@ -293,6 +293,7 @@ export function AppShell({
             onSelectStarred={handleSelectStarred}
             onDeleteFeed={handleDeleteFeed}
             onRefreshFeed={handleRefreshFeed}
+            onUpdateFeed={refresh}
             onRefreshAll={handleRefreshAll}
             onFeedAdded={refresh}
             isStarredView={isStarredView}

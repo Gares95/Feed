@@ -66,6 +66,23 @@ export async function refreshAllFeeds() {
   revalidatePath("/");
 }
 
+export async function updateFeed(
+  feedId: string,
+  data: { title?: string; refreshInterval?: number | null },
+) {
+  const updateData: { title?: string; refreshInterval?: number | null } = {};
+  if (data.title !== undefined) {
+    const trimmed = data.title.trim();
+    if (!trimmed) throw new Error("Title cannot be empty");
+    updateData.title = trimmed;
+  }
+  if (data.refreshInterval !== undefined) {
+    updateData.refreshInterval = data.refreshInterval;
+  }
+  await prisma.feed.update({ where: { id: feedId }, data: updateData });
+  revalidatePath("/");
+}
+
 export async function deleteFeed(feedId: string) {
   await prisma.feed.delete({ where: { id: feedId } });
   revalidatePath("/");

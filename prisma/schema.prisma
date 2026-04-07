@@ -17,6 +17,7 @@ model Feed {
   favicon     String?
   lastFetched DateTime?
   errorCount  Int       @default(0)
+  refreshInterval Int?  // minutes; null = use global default
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 

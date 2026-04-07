@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Rss, Trash2, RefreshCw, AlertTriangle } from "lucide-react";
+import { Rss, Trash2, RefreshCw, AlertTriangle, Settings } from "lucide-react";
+import { FeedSettingsDialog } from "./FeedSettingsDialog";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -21,10 +22,12 @@ interface FeedItemProps {
   unreadCount: number;
   favicon: string | null;
   errorCount: number;
+  refreshInterval: number | null;
   isSelected: boolean;
   onSelect: (feedId: string) => void;
   onDelete: (feedId: string) => void;
   onRefresh: (feedId: string) => void;
+  onUpdated: () => void;
 }
 
 export function FeedItem({
@@ -33,12 +36,15 @@ export function FeedItem({
   unreadCount,
   favicon,
   errorCount,
+  refreshInterval,
   isSelected,
   onSelect,
   onDelete,
   onRefresh,
+  onUpdated,
 }: FeedItemProps) {
   const [open, setOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const hasError = errorCount > 0;
 
   return (
@@ -86,6 +92,25 @@ export function FeedItem({
       >
         <RefreshCw className="h-4 w-4" />
       </button>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setSettingsOpen(true);
+        }}
+        className="hidden shrink-0 rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground group-hover:block"
+        title="Feed settings"
+      >
+        <Settings className="h-4 w-4" />
+      </button>
+      <FeedSettingsDialog
+        feedId={id}
+        initialTitle={title}
+        initialRefreshInterval={refreshInterval}
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        onSaved={onUpdated}
+      />
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogTrigger
           onClick={(e: React.MouseEvent) => {
