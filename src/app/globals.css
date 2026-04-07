@@ -177,6 +177,14 @@
   margin: 1em 0;
 }
 
+.article-content mark.feed-highlight {
+  background-color: oklch(0.75 0.15 85 / 30%);
+  color: inherit;
+  padding: 0.05em 0.15em;
+  border-radius: 0.15em;
+  cursor: help;
+}
+
 .article-content blockquote {
   border-left: 3px solid var(--border);
   padding-left: 1em;

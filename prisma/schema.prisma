@@ -53,10 +53,24 @@ model Article {
   isStarred   Boolean  @default(false)
   createdAt   DateTime @default(now())
 
-  feed Feed @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  feed       Feed        @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  highlights Highlight[]
 
   @@unique([feedId, guid])
   @@index([feedId, publishedAt])
   @@index([isRead])
   @@index([isStarred])
+}
+
+model Highlight {
+  id         String   @id @default(cuid())
+  articleId  String
+  text       String
+  textOffset Int
+  note       String?
+  createdAt  DateTime @default(now())
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId])
 }
