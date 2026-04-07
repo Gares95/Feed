@@ -33,6 +33,7 @@ import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useArticleSearch } from "@/hooks/use-article-search";
 import { useAutoRefresh } from "@/hooks/use-auto-refresh";
 import { useCommandPalette } from "@/hooks/use-command-palette";
+import { useSwipe } from "@/hooks/use-swipe";
 import type { DateRange } from "@/lib/date-range";
 import { CommandPalette } from "@/components/CommandPalette";
 
@@ -209,6 +210,16 @@ export function AppShell({
 
   const displayedArticles = search.results ?? articles;
 
+  const readerSwipe = useSwipe({
+    onSwipeLeft: () => {
+      const i = displayedArticles.findIndex((a) => a.id === selectedArticleId);
+      if (i >= 0 && i + 1 < displayedArticles.length) {
+        handleSelectArticle(displayedArticles[i + 1].id);
+      }
+    },
+    onSwipeRight: () => setMobileView("list"),
+  });
+
   useKeyboardShortcuts({
     onNextArticle: () => {
       const currentIndex = displayedArticles.findIndex(
@@ -335,10 +346,12 @@ export function AppShell({
             />
           )}
           {mobileView === "reader" && (
-            <ReadingPane
-              article={currentArticle}
-              onToggleStar={handleToggleStar}
-            />
+            <div className="h-full" {...readerSwipe}>
+              <ReadingPane
+                article={currentArticle}
+                onToggleStar={handleToggleStar}
+              />
+            </div>
           )}
         </div>
       </div>

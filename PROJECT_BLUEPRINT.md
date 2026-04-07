@@ -441,14 +441,14 @@ These are things we are **intentionally avoiding**:
 
 ### Phase 3 — Reading Experience
 
-- [ ] Content extraction / reader mode (strip ads, nav, extract article body)
+- [x] Content extraction / reader mode (Mozilla Readability, lazy + cached per article)
 - [x] Reading time estimates
 - [x] Article typography settings (font size, line height, width)
-- [ ] Image proxy for broken/blocked images
-- [ ] Code block syntax highlighting in articles
+- [x] Image proxy for broken/blocked images (/api/image-proxy + sanitize rewrite)
+- [x] Code block syntax highlighting in articles (highlight.js, github-dark)
 - [x] "Open in browser" action (existed from Phase 1, keyboard shortcut o/Enter added)
-- [ ] Mobile-responsive layout (collapsible sidebar, stacked panes)
-- [ ] Swipe gestures on mobile
+- [x] Mobile-responsive layout (stacked single-pane below md breakpoint)
+- [x] Swipe gestures on mobile (left = next article, right = back to list)
 
 ### Phase 4 — Intelligence (Optional AI)
 
