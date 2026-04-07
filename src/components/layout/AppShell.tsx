@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronLeft, Menu } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -67,6 +69,9 @@ export function AppShell({
     initialArticle
   );
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [mobileView, setMobileView] = useState<"sidebar" | "list" | "reader">(
+    "list",
+  );
 
   const search = useArticleSearch();
   const { open: paletteOpen, setOpen: setPaletteOpen } = useCommandPalette();
@@ -98,6 +103,7 @@ export function AppShell({
     setIsStarredView(false);
     setSelectedArticleId(null);
     setCurrentArticle(null);
+    setMobileView("list");
 
     startTransition(() => {
       router.push(buildUrl({ feedId }));
@@ -109,6 +115,7 @@ export function AppShell({
     setIsStarredView(true);
     setSelectedArticleId(null);
     setCurrentArticle(null);
+    setMobileView("list");
 
     startTransition(() => {
       router.push(buildUrl({ starred: true }));
@@ -130,6 +137,7 @@ export function AppShell({
 
   async function handleSelectArticle(articleId: string) {
     setSelectedArticleId(articleId);
+    setMobileView("reader");
 
     // Mark as read optimistically
     const articleInList = articles.find((a) => a.id === articleId);
@@ -254,7 +262,93 @@ export function AppShell({
 
   return (
     <div className="h-screen w-screen overflow-hidden">
-      <ResizablePanelGroup orientation="horizontal" id="app-layout">
+      {/* Mobile: stacked single-pane layout */}
+      <div className="flex h-full flex-col md:hidden">
+        <div className="flex h-12 items-center gap-2 border-b px-2">
+          {mobileView === "sidebar" ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setMobileView("list")}
+              title="Back"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+          ) : mobileView === "reader" ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setMobileView("list")}
+              title="Back to list"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setMobileView("sidebar")}
+              title="Open feeds"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
+          <h1 className="truncate text-sm font-semibold">{heading}</h1>
+        </div>
+        <div className="min-h-0 flex-1">
+          {mobileView === "sidebar" && (
+            <Sidebar
+              feeds={feeds}
+              folders={folders}
+              selectedFeedId={selectedFeedId}
+              totalUnread={totalUnread}
+              starredCount={starredCount}
+              onSelectFeed={handleSelectFeed}
+              onSelectStarred={handleSelectStarred}
+              onDeleteFeed={handleDeleteFeed}
+              onRefreshFeed={handleRefreshFeed}
+              onUpdateFeed={refresh}
+              onRefreshAll={handleRefreshAll}
+              onFeedAdded={refresh}
+              isStarredView={isStarredView}
+              isRefreshing={isRefreshing || isPending}
+            />
+          )}
+          {mobileView === "list" && (
+            <ArticleList
+              articles={displayedArticles}
+              selectedArticleId={selectedArticleId}
+              onSelectArticle={handleSelectArticle}
+              heading={heading}
+              searchQuery={search.query}
+              onSearchChange={search.onChange}
+              isSearching={search.isSearching}
+              dateRange={dateRange}
+              onDateRangeChange={handleDateRangeChange}
+              onMarkAllRead={handleMarkAllRead}
+              searchError={search.error}
+              hasFeeds={feeds.length > 0}
+              onRefreshAll={handleRefreshAll}
+            />
+          )}
+          {mobileView === "reader" && (
+            <ReadingPane
+              article={currentArticle}
+              onToggleStar={handleToggleStar}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Desktop: three-pane resizable layout */}
+      <ResizablePanelGroup
+        orientation="horizontal"
+        id="app-layout"
+        className="hidden md:flex"
+      >
         <ResizablePanel
           id="sidebar"
           defaultSize="20%"
