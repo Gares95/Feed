@@ -464,8 +464,8 @@ These are things we are **intentionally avoiding**:
 - [ ] Multiple view modes (three-pane, two-pane, card grid)
 - [ ] Theme customization (accent colors, reader background)
 - [ ] Article annotations / highlights
-- [ ] Export starred articles (Markdown, JSON)
-- [ ] Feed health dashboard (uptime, error rate, frequency)
+- [x] Export starred articles (Markdown, JSON)
+- [x] Feed health dashboard (uptime, error rate, frequency)
 - [ ] Statistics (articles read per day/week, reading time)
 - [ ] Data backup and restore
 

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Newspaper, Star, RefreshCw, FolderPlus, ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Newspaper, Star, RefreshCw, FolderPlus, ChevronDown, ChevronRight, Pencil, Trash2, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -135,6 +136,11 @@ export function Sidebar({
           </Button>
           <AddFeedDialog onFeedAdded={onFeedAdded} />
           <OpmlActions onImportComplete={onFeedAdded} />
+          <Link href="/health" title="Feed health dashboard">
+            <Button variant="ghost" size="icon" className="h-7 w-7">
+              <Activity className="h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </div>
 

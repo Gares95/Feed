@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Upload, Download } from "lucide-react";
+import { Upload, Download, FileJson, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface OpmlActionsProps {
@@ -70,6 +70,24 @@ export function OpmlActions({ onImportComplete }: OpmlActionsProps) {
       >
         <Button variant="ghost" size="icon" className="h-7 w-7">
           <Download className="h-4 w-4" />
+        </Button>
+      </a>
+      <a
+        href="/api/export/starred?format=md"
+        download="starred-articles.md"
+        title="Export starred (Markdown)"
+      >
+        <Button variant="ghost" size="icon" className="h-7 w-7">
+          <FileText className="h-4 w-4" />
+        </Button>
+      </a>
+      <a
+        href="/api/export/starred?format=json"
+        download="starred-articles.json"
+        title="Export starred (JSON)"
+      >
+        <Button variant="ghost" size="icon" className="h-7 w-7">
+          <FileJson className="h-4 w-4" />
         </Button>
       </a>
     </div>
