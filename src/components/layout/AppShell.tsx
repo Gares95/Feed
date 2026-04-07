@@ -62,7 +62,7 @@ export function AppShell({
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(
     initialArticle?.id ?? null
   );
-  const [articles] = useState(initialArticles);
+  const articles = initialArticles;
   const [currentArticle, setCurrentArticle] = useState<ArticleFull | null>(
     initialArticle
   );
