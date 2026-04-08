@@ -7,7 +7,7 @@ import { searchArticles as searchArticlesQuery } from "@/lib/queries";
 export async function markRead(articleId: string) {
   await prisma.article.update({
     where: { id: articleId },
-    data: { isRead: true },
+    data: { isRead: true, readAt: new Date() },
   });
   revalidatePath("/");
 }
@@ -15,7 +15,7 @@ export async function markRead(articleId: string) {
 export async function markUnread(articleId: string) {
   await prisma.article.update({
     where: { id: articleId },
-    data: { isRead: false },
+    data: { isRead: false, readAt: null },
   });
   revalidatePath("/");
 }
@@ -41,7 +41,7 @@ export async function searchArticles(query: string) {
 export async function markAllRead(feedId?: string) {
   await prisma.article.updateMany({
     where: feedId ? { feedId, isRead: false } : { isRead: false },
-    data: { isRead: true },
+    data: { isRead: true, readAt: new Date() },
   });
   revalidatePath("/");
 }

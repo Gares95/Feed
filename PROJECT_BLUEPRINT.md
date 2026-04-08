@@ -466,7 +466,7 @@ These are things we are **intentionally avoiding**:
 - [x] Article annotations / highlights
 - [x] Export starred articles (Markdown, JSON)
 - [x] Feed health dashboard (uptime, error rate, frequency)
-- [ ] Statistics (articles read per day/week, reading time)
+- [x] Statistics (articles read per day/week, reading time)
 - [ ] Data backup and restore
 
 ---

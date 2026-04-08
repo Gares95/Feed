@@ -50,6 +50,7 @@ model Article {
   imageUrl    String?
   publishedAt DateTime
   isRead      Boolean  @default(false)
+  readAt      DateTime?
   isStarred   Boolean  @default(false)
   createdAt   DateTime @default(now())
 
@@ -59,6 +60,7 @@ model Article {
   @@unique([feedId, guid])
   @@index([feedId, publishedAt])
   @@index([isRead])
+  @@index([readAt])
   @@index([isStarred])
 }
 

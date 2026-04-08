@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Newspaper, Star, RefreshCw, FolderPlus, ChevronDown, ChevronRight, Pencil, Trash2, Activity } from "lucide-react";
+import { Newspaper, Star, RefreshCw, FolderPlus, ChevronDown, ChevronRight, Pencil, Trash2, Activity, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -139,6 +139,11 @@ export function Sidebar({
           <Link href="/health" title="Feed health dashboard">
             <Button variant="ghost" size="icon" className="h-7 w-7">
               <Activity className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Link href="/stats" title="Reading stats">
+            <Button variant="ghost" size="icon" className="h-7 w-7">
+              <BarChart3 className="h-4 w-4" />
             </Button>
           </Link>
         </div>
