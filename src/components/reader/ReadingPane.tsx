@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BookOpen, Highlighter, Loader2, Sparkles, Trash2 } from "lucide-react";
+import { BookOpen, Highlighter, Loader2, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { ArticleHeader } from "./ArticleHeader";
@@ -14,6 +14,7 @@ import {
   addHighlight,
   deleteHighlight,
   getHighlights,
+  updateHighlightNote,
 } from "@/actions/highlights";
 import {
   applyHighlights,
@@ -135,6 +136,14 @@ export function ReadingPane({ article, onToggleStar }: ReadingPaneProps) {
     setHighlights((prev) => prev.filter((h) => h.id !== id));
   }
 
+  async function saveNote(id: string, note: string) {
+    const trimmed = note.trim() || null;
+    await updateHighlightNote(id, trimmed);
+    setHighlights((prev) =>
+      prev.map((h) => (h.id === id ? { ...h, note: trimmed } : h)),
+    );
+  }
+
   async function toggleReaderMode() {
     if (!article) return;
     if (readerMode) {
@@ -227,22 +236,12 @@ export function ReadingPane({ article, onToggleStar }: ReadingPaneProps) {
                   .slice()
                   .sort((a, b) => a.textOffset - b.textOffset)
                   .map((h) => (
-                    <li
+                    <HighlightItem
                       key={h.id}
-                      className="group flex items-start gap-2 rounded-md border border-border bg-card p-3 text-sm"
-                    >
-                      <span className="flex-1 italic text-foreground">
-                        “{h.text}”
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removeHighlight(h.id)}
-                        className="opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
-                        title="Delete highlight"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </li>
+                      highlight={h}
+                      onDelete={() => removeHighlight(h.id)}
+                      onSaveNote={(note) => saveNote(h.id, note)}
+                    />
                   ))}
               </ul>
             </div>
@@ -264,5 +263,81 @@ export function ReadingPane({ article, onToggleStar }: ReadingPaneProps) {
         </button>
       )}
     </div>
+  );
+}
+
+interface HighlightItemProps {
+  highlight: HighlightRecord;
+  onDelete: () => void;
+  onSaveNote: (note: string) => void | Promise<void>;
+}
+
+function HighlightItem({ highlight, onDelete, onSaveNote }: HighlightItemProps) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(highlight.note ?? "");
+
+  function startEdit() {
+    setDraft(highlight.note ?? "");
+    setEditing(true);
+  }
+
+  async function commit() {
+    setEditing(false);
+    if ((draft.trim() || null) !== (highlight.note ?? null)) {
+      await onSaveNote(draft);
+    }
+  }
+
+  return (
+    <li className="group flex flex-col gap-2 rounded-md border border-border bg-card p-3 text-sm">
+      <div className="flex items-start gap-2">
+        <span className="flex-1 italic text-foreground">“{highlight.text}”</span>
+        <button
+          type="button"
+          onClick={startEdit}
+          className="opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+          title={highlight.note ? "Edit note" : "Add note"}
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          className="opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+          title="Delete highlight"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      {editing ? (
+        <textarea
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              commit();
+            }
+            if (e.key === "Escape") {
+              setEditing(false);
+              setDraft(highlight.note ?? "");
+            }
+          }}
+          placeholder="Add a note…"
+          className="min-h-[60px] w-full resize-y rounded-md border border-border bg-background p-2 text-xs text-foreground outline-none focus:border-primary"
+        />
+      ) : (
+        highlight.note && (
+          <p
+            className="cursor-text rounded-sm text-xs text-muted-foreground hover:text-foreground"
+            onClick={startEdit}
+          >
+            {highlight.note}
+          </p>
+        )
+      )}
+    </li>
   );
 }
