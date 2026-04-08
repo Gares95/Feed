@@ -27,8 +27,9 @@ export function rangeTextOffset(container: Node, range: Range): number {
 
 /**
  * Wrap a slice of a container's textContent (starting at `offset`, length
- * `length`) with <mark> elements. Splits across text nodes as needed. The
- * resulting mark(s) carry data-highlight-id and a class for styling.
+ * `length`) with <mark> elements, splitting across text nodes when the
+ * range spans them. Each resulting mark carries data-highlight-id and a
+ * class for styling.
  */
 export function applyHighlight(
   container: Node,

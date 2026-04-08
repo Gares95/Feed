@@ -26,7 +26,7 @@ A local-first RSS / Atom reader. Runs entirely on your machine, stores everythin
 ## Quick start
 
 ```bash
-git clone <this-repo>
+git clone https://github.com/Gares95/Feed.git
 cd Feed
 npm run setup       # install + prisma generate + prisma migrate dev
 npm run dev         # http://localhost:3000
