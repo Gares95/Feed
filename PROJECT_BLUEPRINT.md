@@ -410,7 +410,7 @@ These are things we are **intentionally avoiding**:
 
 - [x] Project scaffolding (Next.js 15, TypeScript, Tailwind v4, Prisma + SQLite)
 - [x] Database schema (Feed, Article models)
-- [x] `npm run setup` script (install + prisma generate + prisma migrate dev)
+- [x] `npm run setup` script (install + prisma generate + prisma migrate deploy)
 - [x] Feed parser service (fetch URL → parse RSS/Atom → return structured data)
 - [x] API route: `POST /api/feeds` — add a new feed (fetch, parse, store)
 - [x] Server actions: `refreshFeed`, `refreshAllFeeds`
@@ -525,8 +525,11 @@ npx shadcn@latest add button dialog input scroll-area separator
 # If not available via CLI, copy from UIGen's src/components/ui/resizable.tsx
 
 # Set up scripts in package.json:
-# "setup": "npm install && npx prisma generate && npx prisma migrate dev"
+# "setup": "npm install && npx prisma generate && npx prisma migrate deploy"
 # "dev": "next dev --turbopack"
+# Note: 'migrate deploy' is used in setup so fresh clones succeed in
+# non-interactive shells. Creating a new migration after a schema
+# change still uses 'npx prisma migrate dev --name <name>'.
 
 # Create the schema, run migrations
 npx prisma migrate dev --name init
