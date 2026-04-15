@@ -3,13 +3,8 @@
 import { format } from "date-fns";
 import { Clock, ExternalLink, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { estimateReadingTime } from "@/lib/reading-time";
 import { cn } from "@/lib/utils";
-
-function estimateReadingTime(html: string): number {
-  const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-  const wordCount = text.split(" ").filter(Boolean).length;
-  return Math.max(1, Math.round(wordCount / 200));
-}
 
 interface ArticleHeaderProps {
   title: string;
@@ -50,11 +45,15 @@ export function ArticleHeader({
         <time dateTime={new Date(publishedAt).toISOString()}>
           {format(new Date(publishedAt), "MMM d, yyyy")}
         </time>
-        <span>·</span>
-        <span className="inline-flex items-center gap-1">
-          <Clock className="h-3 w-3" />
-          {readingTime} min read
-        </span>
+        {readingTime !== null && (
+          <>
+            <span>·</span>
+            <span className="inline-flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {readingTime} min read
+            </span>
+          </>
+        )}
       </div>
       <div className="flex items-center gap-2">
         <Button
