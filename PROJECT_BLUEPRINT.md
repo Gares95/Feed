@@ -442,7 +442,7 @@ These are things we are **intentionally avoiding**:
 ### Phase 3 — Reading Experience
 
 - [x] Content extraction / reader mode (Mozilla Readability, lazy + cached per article)
-- [x] Reading time estimates
+- [x] Reading time estimates (shown when content is complete; hidden for truncated RSS excerpts — full-content backfill tracked in Open Proposals)
 - [x] Article typography settings (font size, line height, width)
 - [x] Image proxy for broken/blocked images (/api/image-proxy + sanitize rewrite)
 - [x] Code block syntax highlighting in articles (highlight.js, github-dark)
@@ -601,6 +601,81 @@ Beyond the phased roadmap, these are ideas worth considering once the product is
 - **API for external tools**: Local REST API so scripts/automations can interact with Feed
 - **Cross-device sync**: Optional, via user-managed file sync (Dropbox, Syncthing) of the SQLite file
 - **Progressive Web App**: Add PWA manifest for app-like experience
+
+### Additional Feature Ideas (Candidate Backlog)
+
+Reading workflow:
+- **Read-later / queue** distinct from unread — snooze-style "save for weekend"
+- **Rules engine** — per-feed keyword include/exclude, auto-star on match, auto-mark-read on match (kills repetitive "sponsored" items)
+- **Tags** on articles (user-applied), with a tag sidebar
+- **Notes overview page** — browse all highlights/notes across all articles, searchable
+- **Focus timer / reading session** — pomodoro-style, pairs with existing stats page
+
+Feed management:
+- **Paused feeds** — keep subscribed, stop fetching (vacation, noisy feed)
+- **Feed discovery bookmarklet** — open Feed with the current site's feed pre-filled (lighter than a browser extension)
+- **Bulk feed actions** — multi-select in sidebar for move / delete / pause
+- **Import-time dedupe** — detect duplicates when importing OPML
+
+Content quality:
+- **Offline mode** — explicitly download full article + images for selected feeds (starred feeds, commute reading)
+- **Clean tracking params** in article URLs on export/share (utm_*, fbclid)
+- **Markdown export** of a single article (copy or download)
+- **Share-as-image** — screenshot of a highlighted passage
+
+Non-RSS sources (scope creep, but users ask for them):
+- **Newsletter inbox** — local SMTP receiver or Kill-the-Newsletter bridge, ingest newsletters as feeds
+- **Bridge-driven feeds** — YouTube, Reddit, GitHub releases via RSS bridges with first-class UI
+
+---
+
+## Open Proposals
+
+Concrete proposals to evaluate when the relevant phase is active. Each one captures the *why* and the trade-offs so the decision is easy to pick up later.
+
+### Reading time — full-content backfill (follow-up to Phase 3)
+
+**Status:** Partial fix shipped. Reading time is hidden when RSS content is truncated or below 150 words. Most feeds deliver excerpts, so the badge is missing from most articles today.
+
+**Proposal:** Persist a `wordCount Int?` column on `Article`. Populate it during ingestion using the reader-mode extractor (Mozilla Readability) when the stored content looks truncated. Show the estimate everywhere once the column is non-null.
+
+**Trade-offs:**
+- Pro: accurate reading time on the list view and header, no runtime recompute cost.
+- Pro: groundwork for a future "long/short" filter.
+- Con: reader extraction per article at ingest time is network + CPU overhead; must be throttled and failure-tolerant.
+- Con: migration touches existing rows; backfill pass needed.
+
+### Retention policy — local, automatic article pruning
+
+**Problem:** Articles are kept forever. At ~30 feeds × ~10 articles/day × ~5 KB each the DB grows ~550 MB/year. Full-text search results get dominated by ancient noise, backups get heavier, queries over `publishedAt` slow down.
+
+**Proposal:**
+- Default retention: delete articles older than 90 days (configurable from settings).
+- **Always preserved:** starred, has highlights, unread, read within the retention window.
+- Runs nightly as part of the refresh cycle, with a one-line "Retention" entry in a future maintenance log.
+- User-facing: a clear settings toggle (default on) plus a preview of what would be deleted before the first prune.
+
+**Trade-offs:**
+- Pro: bounded disk use, faster queries, cleaner FTS corpus, set-and-forget.
+- Pro: matches the local-first thesis — no cloud tier needed.
+- Con: loses browsing history (can't revisit "what did I read in 2024?").
+- Con: destructive-by-default — needs a visible toggle and a dry-run preview to be safe.
+
+**Explicitly not:** a "paid tier" differentiator. Feed is single-user local-first — retention is a user preference, not a gated feature.
+
+### Background refresher — closing the "app was closed for a week" gap
+
+**Problem:** RSS feeds expose only their last N items. If the browser tab is closed for a week, nothing is polling; when the tab reopens, any articles the publisher has since rotated out of the XML are unrecoverable. This is intrinsic to RSS, not a bug — but the gap can be shrunk dramatically.
+
+**Proposal (realistic, local-first):** run the refresher independently of the browser tab so it keeps fetching while the user is away. Options in increasing footprint:
+
+1. **OS cron / systemd timer** — a small script hitting `refreshDueFeeds` hourly. Zero infra, user-installed, documented in `README.md`.
+2. **Long-running Node process** — `npm run daemon` that stays up and polls on the feed-configured intervals. Same process model as `npm run dev` but headless.
+3. **Electron-style wrapper** — ships Feed as a background menu-bar app so the refresher lives with the user's session. Largest change, best UX.
+
+**UI affordance either way:** show "Last fetched N days ago — some articles from this period may be unavailable" per feed when the gap exceeds a threshold. Honest signalling beats silent loss.
+
+**Explicitly rejected:** any paid/hosted archiver. Would violate the "no cloud, no accounts" constraint. Users who want deep history can integrate their own third-party account (Feedbin, Inoreader) via a later user-provided-key hook.
 
 ---
 
