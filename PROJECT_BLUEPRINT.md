@@ -299,9 +299,9 @@ The app should feel like a premium reading tool. Think: low-contrast dark surfac
 │   Sidebar    │   Article List     │   Reading Pane           │
 │   (feeds)    │   (titles+dates)   │   (full article)         │
 │              │                    │                          │
-│  240-280px   │    300-400px       │   remaining space        │
-│  min: 200    │    min: 250        │   min: 400               │
-│  collapsible │                    │                          │
+│  default 28% │   default 30%      │   default 50%            │
+│  min: 200px  │   min: 250px       │   min: 400px             │
+│  max: 38%    │                    │                          │
 └──────────────┴────────────────────┴──────────────────────────┘
 ```
 

@@ -364,9 +364,9 @@ export function AppShell({
       >
         <ResizablePanel
           id="sidebar"
-          defaultSize="20%"
+          defaultSize="28%"
           minSize="200px"
-          maxSize="30%"
+          maxSize="38%"
           className="bg-card"
         >
           <Sidebar
