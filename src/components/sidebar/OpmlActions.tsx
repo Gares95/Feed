@@ -1,8 +1,16 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Upload, Download, FileJson, FileText } from "lucide-react";
+import { ArrowDownUp, Upload, Download, FileJson, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Menu,
+  MenuTrigger,
+  MenuContent,
+  MenuItem,
+  MenuLinkItem,
+  MenuSeparator,
+} from "@/components/ui/menu";
 
 interface OpmlActionsProps {
   onImportComplete: () => void;
@@ -45,7 +53,7 @@ export function OpmlActions({ onImportComplete }: OpmlActionsProps) {
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <>
       <input
         ref={fileInputRef}
         type="file"
@@ -53,43 +61,46 @@ export function OpmlActions({ onImportComplete }: OpmlActionsProps) {
         className="hidden"
         onChange={handleImport}
       />
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-7 w-7"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={isImporting}
-        title="Import OPML"
-      >
-        <Upload className="h-4 w-4" />
-      </Button>
-      <a
-        href="/api/opml"
-        download="feed-subscriptions.opml"
-        title="Export OPML"
-      >
-        <Button variant="ghost" size="icon" className="h-7 w-7">
-          <Download className="h-4 w-4" />
-        </Button>
-      </a>
-      <a
-        href="/api/export/starred?format=md"
-        download="starred-articles.md"
-        title="Export starred (Markdown)"
-      >
-        <Button variant="ghost" size="icon" className="h-7 w-7">
-          <FileText className="h-4 w-4" />
-        </Button>
-      </a>
-      <a
-        href="/api/export/starred?format=json"
-        download="starred-articles.json"
-        title="Export starred (JSON)"
-      >
-        <Button variant="ghost" size="icon" className="h-7 w-7">
-          <FileJson className="h-4 w-4" />
-        </Button>
-      </a>
-    </div>
+      <Menu>
+        <MenuTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              disabled={isImporting}
+              title="Import / Export"
+            />
+          }
+        >
+          <ArrowDownUp className="h-4 w-4" />
+        </MenuTrigger>
+        <MenuContent>
+          <MenuItem onClick={() => fileInputRef.current?.click()}>
+            <Upload />
+            Import OPML…
+          </MenuItem>
+          <MenuLinkItem href="/api/opml" download="feed-subscriptions.opml">
+            <Download />
+            Export OPML
+          </MenuLinkItem>
+          <MenuSeparator />
+          <MenuLinkItem
+            href="/api/export/starred?format=md"
+            download="starred-articles.md"
+          >
+            <FileText />
+            Export starred as Markdown
+          </MenuLinkItem>
+          <MenuLinkItem
+            href="/api/export/starred?format=json"
+            download="starred-articles.json"
+          >
+            <FileJson />
+            Export starred as JSON
+          </MenuLinkItem>
+        </MenuContent>
+      </Menu>
+    </>
   );
 }

@@ -110,9 +110,9 @@ export function Sidebar({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-12 items-center justify-between border-b px-4">
+      <div className="flex min-h-12 flex-wrap items-center justify-between gap-y-1 border-b px-4 py-1.5">
         <h1 className="text-sm font-semibold tracking-tight">Feed</h1>
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
