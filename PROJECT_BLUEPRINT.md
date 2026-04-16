@@ -670,13 +670,44 @@ Concrete proposals to evaluate when the relevant phase is active. Each one captu
 
 **Problem:** RSS feeds expose only their last N items. If the browser tab is closed for a week, nothing is polling; when the tab reopens, any articles the publisher has since rotated out of the XML are unrecoverable. This is intrinsic to RSS, not a bug — but the gap can be shrunk dramatically.
 
-**Proposal (realistic, local-first):** run the refresher independently of the browser tab so it keeps fetching while the user is away. Options in increasing footprint:
+#### Execution model
 
-1. **OS cron / systemd timer** — a small script hitting `refreshDueFeeds` hourly. Zero infra, user-installed, documented in `README.md`.
-2. **Long-running Node process** — `npm run daemon` that stays up and polls on the feed-configured intervals. Same process model as `npm run dev` but headless.
-3. **Electron-style wrapper** — ships Feed as a background menu-bar app so the refresher lives with the user's session. Largest change, best UX.
+Three layers, to be added incrementally. Each is useful on its own; later layers close smaller and smaller gaps.
 
-**UI affordance either way:** show "Last fetched N days ago — some articles from this period may be unavailable" per feed when the gap exceeds a threshold. Honest signalling beats silent loss.
+1. **On focus / on app open (Phase 2, default on).** When the tab becomes visible after being idle for more than N minutes, trigger `refreshDueFeeds`. Zero background cost — refresh happens only when the user is actually present. Closes the "just opened the app" freshness gap.
+2. **Interval while app is open (Phase 2, default on).** A timer inside the client polls `refreshDueFeeds` every 30 minutes while the tab is focused. Pauses when the tab is hidden or the laptop sleeps. Keeps a long reading session fresh without the user hitting a refresh button.
+3. **Out-of-process refresher (Open Proposal, opt-in).** For the "closed for a week" case only — needs something running when the app isn't. Options in increasing footprint:
+   - **OS cron / systemd timer** — a small script hitting `refreshDueFeeds` hourly. Zero infra, user-installed, documented in `README.md`.
+   - **Long-running Node process** — `npm run daemon` that stays up and polls on per-feed intervals. Same process model as `npm run dev` but headless.
+   - **Electron-style wrapper** — ships Feed as a menu-bar app so the refresher lives with the user's session. Largest change, best UX.
+
+#### Settings (user control)
+
+Expose in a Settings panel — single-user app, but people still want control over network activity. Defaults chosen to be polite and low-surprise.
+
+| Setting | Default | Notes |
+|---|---|---|
+| Auto-refresh on focus | On | The main "does the app feel alive" knob. |
+| Auto-refresh interval (while open) | 30 min | Choices: off / 15m / 30m / 1h / 6h. "Off" means manual-only. |
+| Per-feed override | Inherit | Some feeds update hourly, others weekly — let power users set it. Stored on `Feed`. |
+| Out-of-process refresher | Off | Opt-in, with a setup note pointing at the cron/daemon recipe. |
+
+A visible "Last refreshed" timestamp and a manual **Refresh all** button are non-negotiable — users should always be able to verify what happened and force a run.
+
+#### Politeness
+
+Feed servers often blocklist clients that poll blindly. The refresher must:
+
+- Send `If-None-Match` (ETag) and `If-Modified-Since` headers when we have them, and store the values from each response. A `304 Not Modified` is the happy path.
+- Respect `Cache-Control: max-age` and `Retry-After` — never poll a feed more often than it asks.
+- Stagger requests (jittered, a few in flight at a time) instead of a synchronous burst across all feeds.
+- Back off on repeated 4xx/5xx: a feed that 403s three times in a row shouldn't be hit every cycle.
+
+These aren't optional — a naive refresher will get the user rate-limited within a day.
+
+#### UI affordance
+
+Show "Last fetched N days ago — some articles from this period may be unavailable" per feed when the gap exceeds a threshold. Honest signalling beats silent loss.
 
 **Explicitly rejected:** any paid/hosted archiver. Would violate the "no cloud, no accounts" constraint. Users who want deep history can integrate their own third-party account (Feedbin, Inoreader) via a later user-provided-key hook.
 
