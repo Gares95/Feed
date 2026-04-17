@@ -24,24 +24,29 @@ Feed is a local-first RSS/Atom reader. No auth, no cloud, no API keys. SQLite st
 
 ```
 Add feed URL -> POST /api/feeds -> server-side fetch RSS -> parse XML -> sanitize HTML -> store in SQLite
-Read articles -> Server Components query Prisma -> render three-pane layout
-Single article -> GET /api/articles/[id] -> full content for reading pane
-Mutations (mark read/star) -> Server Actions -> update SQLite -> optimistic UI update
+Read articles -> Server Components call lib/queries.ts -> render three-pane layout
+Single article -> GET /api/articles/[id] -> Readability extraction -> full content for reading pane
+Search -> lib/queries.ts#searchArticles -> SQLite FTS virtual table (ArticleFts) -> ranked results
+Mutations (mark read/star/highlight) -> Server Actions -> update SQLite -> optimistic UI update
+Images -> GET /api/image-proxy -> proxied to avoid mixed-content issues
+OPML -> POST /api/opml (import) / GET /api/opml (export)
 ```
+
+Additional pages: `/health` (feed health dashboard), `/stats` (reading statistics), `/settings` (app settings).
 
 ### Key Directories
 
 - `src/app/` — Pages and API routes (App Router)
-- `src/actions/` — Server Actions for mutations (feeds.ts, articles.ts)
-- `src/components/` — React components organized by feature (layout/, sidebar/, articles/, reader/, ui/)
-- `src/lib/` — Business logic (feed-parser, sanitize, prisma singleton, utils)
+- `src/actions/` — Server Actions for mutations (feeds.ts, articles.ts, folders.ts, highlights.ts, reader.ts, retention.ts)
+- `src/components/` — React components organized by feature (layout/, sidebar/, articles/, reader/, ui/); `CommandPalette.tsx` at this level is the global keyboard-driven palette
+- `src/lib/` — Business logic: `queries.ts` (all read queries used by Server Components), `feed-parser.ts`, `sanitize.ts`, `prisma.ts`, `fts-query.ts` (FTS builder), `feed-health.ts`, `feed-schedule.ts`, `highlights.ts`, `opml.ts`, `retention.ts`, `stats.ts`, `settings.ts`, `reading-time.ts`, `group-feeds.ts`, `discover-feed.ts`, `export-starred.ts`
 - `src/hooks/` — Custom React hooks (keyboard shortcuts)
 - `prisma/` — Schema and migrations
 
 ### Tech Stack
 
 - Next.js 15 (App Router), React 19, TypeScript 5 (strict mode)
-- Tailwind CSS v4, shadcn/ui (New York style), Lucide icons
+- Tailwind CSS v4, @base-ui/react (primitives wrapped in `src/components/ui/`), Lucide icons
 - react-resizable-panels for three-pane layout
 - Prisma 6 + SQLite (single file DB at prisma/dev.db)
 - rss-parser for RSS/Atom parsing, dompurify + jsdom for server-side HTML sanitization
