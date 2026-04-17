@@ -142,42 +142,78 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-model Feed {
-  id          String    @id @default(cuid())
-  title       String
-  url         String    @unique  // The RSS/Atom feed URL
-  siteUrl     String?             // The website URL
-  description String?
-  favicon     String?             // Favicon URL or data URI
-  lastFetched DateTime?
-  errorCount  Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+model Folder {
+  id        String   @id @default(cuid())
+  name      String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  articles    Article[]
+  feeds Feed[]
+}
+
+model Feed {
+  id              String    @id @default(cuid())
+  title           String
+  url             String    @unique
+  siteUrl         String?
+  description     String?
+  favicon         String?
+  lastFetched     DateTime?
+  errorCount      Int       @default(0)
+  refreshInterval Int?      // minutes; null = use global default
+  folderId        String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  folder   Folder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  articles Article[]
+
+  @@index([folderId])
 }
 
 model Article {
   id          String    @id @default(cuid())
   feedId      String
-  guid        String                // Unique ID from the feed (link or guid element)
+  guid        String
   title       String
-  link        String                // Original article URL
-  content     String    @default("") // Sanitized HTML content
-  summary     String?               // Short excerpt
+  link        String
+  content     String    @default("")
+  summary     String?
   author      String?
-  imageUrl    String?               // og:image or first image
+  imageUrl    String?
   publishedAt DateTime
   isRead      Boolean   @default(false)
+  readAt      DateTime?
   isStarred   Boolean   @default(false)
   createdAt   DateTime  @default(now())
 
-  feed        Feed      @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  feed       Feed        @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  highlights Highlight[]
 
   @@unique([feedId, guid])
   @@index([feedId, publishedAt])
   @@index([isRead])
+  @@index([readAt])
   @@index([isStarred])
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model Highlight {
+  id         String   @id @default(cuid())
+  articleId  String
+  text       String
+  textOffset Int
+  note       String?
+  createdAt  DateTime @default(now())
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId])
 }
 ```
 
@@ -203,12 +239,16 @@ feed/
 │   │   ├── layout.tsx              # Root layout (dark mode class, fonts)
 │   │   ├── page.tsx                # Main page — three-pane reader
 │   │   ├── globals.css             # Tailwind + CSS variables + dark theme
+│   │   ├── settings/
+│   │   │   └── page.tsx            # Settings page (retention policy config)
 │   │   └── api/
 │   │       └── feeds/
 │   │           └── route.ts        # POST: add feed, GET: refresh feeds
 │   ├── actions/
 │   │   ├── feeds.ts                # addFeed, deleteFeed, refreshFeed, refreshAll
-│   │   └── articles.ts             # markRead, markUnread, toggleStar, markAllRead
+│   │   ├── articles.ts             # markRead, markUnread, toggleStar, markAllRead
+│   │   ├── folders.ts              # createFolder, renameFolder, deleteFolder, moveFeedToFolder
+│   │   └── retention.ts            # getRetentionConfig, setRetentionConfig, previewRetention, pruneArticles
 │   ├── components/
 │   │   ├── layout/
 │   │   │   └── AppShell.tsx        # Three-pane resizable layout
@@ -222,6 +262,8 @@ feed/
 │   │   ├── reader/
 │   │   │   ├── ReadingPane.tsx     # Article content renderer
 │   │   │   └── ArticleHeader.tsx   # Title, author, date, source link, star button
+│   │   ├── settings/
+│   │   │   └── RetentionSettings.tsx # Retention policy toggle, period, preview, prune
 │   │   └── ui/                     # shadcn/ui components
 │   │       ├── button.tsx
 │   │       ├── dialog.tsx
@@ -234,6 +276,8 @@ feed/
 │   │   ├── utils.ts                # cn() utility
 │   │   ├── feed-parser.ts          # RSS/Atom fetch + parse + sanitize
 │   │   ├── sanitize.ts             # DOMPurify HTML sanitization
+│   │   ├── settings.ts             # Key-value settings helpers (get/set/getNumber/getBool)
+│   │   ├── retention.ts            # Pure retention helpers (cutoffDate, retentionWhere)
 │   │   └── constants.ts            # App-wide constants
 │   └── hooks/
 │       └── use-keyboard-shortcuts.ts
@@ -467,6 +511,8 @@ These are things we are **intentionally avoiding**:
 - [x] Export starred articles (Markdown, JSON)
 - [x] Feed health dashboard (uptime, error rate, frequency)
 - [x] Statistics (articles read per day/week, reading time)
+- [x] Settings page with key-value config (Setting model)
+- [x] Retention policy — automatic pruning of old read articles (configurable period, preserves starred/highlighted/unread, auto-prunes during refresh cycle)
 - [ ] Data backup and restore
 
 ---
@@ -650,21 +696,14 @@ Concrete proposals to evaluate when the relevant phase is active. Each one captu
 
 ### Retention policy — local, automatic article pruning
 
-**Problem:** Articles are kept forever. At ~30 feeds × ~10 articles/day × ~5 KB each the DB grows ~550 MB/year. Full-text search results get dominated by ancient noise, backups get heavier, queries over `publishedAt` slow down.
+**Status:** Shipped. Settings page at `/settings` with toggle (default off), configurable period (30/60/90/180/365 days), dry-run preview, and manual "Prune now" button. Auto-prune runs during the feed refresh cycle with a 23-hour cooldown. Preserves starred, highlighted, and unread articles. Deliberate deviation from original proposal: default is **off** (not on) to avoid destructive-by-default behavior.
 
-**Proposal:**
-- Default retention: delete articles older than 90 days (configurable from settings).
-- **Always preserved:** starred, has highlights, unread, read within the retention window.
-- Runs nightly as part of the refresh cycle, with a one-line "Retention" entry in a future maintenance log.
-- User-facing: a clear settings toggle (default on) plus a preview of what would be deleted before the first prune.
-
-**Trade-offs:**
-- Pro: bounded disk use, faster queries, cleaner FTS corpus, set-and-forget.
-- Pro: matches the local-first thesis — no cloud tier needed.
-- Con: loses browsing history (can't revisit "what did I read in 2024?").
-- Con: destructive-by-default — needs a visible toggle and a dry-run preview to be safe.
-
-**Explicitly not:** a "paid tier" differentiator. Feed is single-user local-first — retention is a user preference, not a gated feature.
+**Implementation:**
+- `Setting` model (key-value) stores `retention.enabled`, `retention.days`, `retention.lastRun`
+- `src/lib/retention.ts` — pure helpers (`cutoffDate`, `retentionWhere`)
+- `src/actions/retention.ts` — server actions (`getRetentionConfig`, `setRetentionConfig`, `previewRetention`, `pruneArticles`, `maybeAutoprune`)
+- `src/components/settings/RetentionSettings.tsx` — client component with toggle, period selector, preview, prune button
+- `src/actions/feeds.ts` — `runAutoprune()` called after `refreshDueFeeds`
 
 ### Background refresher — closing the "app was closed for a week" gap
 
