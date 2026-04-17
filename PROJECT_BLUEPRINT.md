@@ -69,13 +69,15 @@ The MVP must deliver a complete, usable reading experience:
 |---|---|---|
 | Framework | **Next.js 15** (App Router) | Server components for data fetching, API routes for feed fetching, proven at this scale |
 | Language | **TypeScript 5** | Type safety, especially for feed/article data models |
-| UI Components | **shadcn/ui** (New York style) | Pre-built accessible components, easy to customize, Radix primitives underneath |
+| UI Components | **@base-ui/react** (wrapped in `src/components/ui/`) | Headless accessible primitives; shadcn CLI used to scaffold wrappers |
 | Icons | **Lucide React** | Clean, consistent, tree-shakeable |
 | Styling | **Tailwind CSS v4** | Utility-first, CSS variables for theming, fast iteration |
 | Layout | **react-resizable-panels** | Proven in UIGen for multi-pane resizable layouts |
 | Database | **Prisma 6 + SQLite** | Zero-config local persistence, typed queries, migrations |
 | RSS Parsing | **rss-parser** | Battle-tested RSS/Atom parser, handles edge cases |
 | HTML Sanitization | **DOMPurify + jsdom** | Secure rendering of feed content (server-side sanitization) |
+| Content Extraction | **@mozilla/readability** | Reader-mode extraction for full article content |
+| Syntax Highlighting | **highlight.js** | Code block highlighting in article content (github-dark theme) |
 | Date Handling | **date-fns** | Lightweight, tree-shakeable, relative time formatting |
 | Testing | **Vitest + React Testing Library** | Fast, same setup as UIGen |
 | Fonts | **Geist Sans + Geist Mono** (via next/font) | Clean, modern, optimized loading |
@@ -86,7 +88,7 @@ The MVP must deliver a complete, usable reading experience:
 - No `bcrypt` or `jose` (no auth)
 - No `@babel/standalone` (no transpilation)
 - No `@monaco-editor/react` (no code editing)
-- No `cmdk` in MVP (add in Phase 2 for command palette)
+- No `cmdk` — command palette (Phase 2) was implemented without it
 
 ---
 
@@ -264,7 +266,7 @@ feed/
 │   │   │   └── ArticleHeader.tsx   # Title, author, date, source link, star button
 │   │   ├── settings/
 │   │   │   └── RetentionSettings.tsx # Retention policy toggle, period, preview, prune
-│   │   └── ui/                     # shadcn/ui components
+│   │   └── ui/                     # @base-ui/react wrappers
 │   │       ├── button.tsx
 │   │       ├── dialog.tsx
 │   │       ├── input.tsx
@@ -521,77 +523,12 @@ These are things we are **intentionally avoiding**:
 
 | Milestone | Target | Deliverable |
 |---|---|---|
-| **M1: Skeleton** | End of first session | Project scaffolded, DB schema, one-command setup works, dev server runs with empty three-pane layout |
-| **M2: Feed Ingestion** | +1 session | Can add a feed URL, fetch articles, see them in the article list |
-| **M3: Reading** | +1 session | Click an article → see rendered content in reading pane, mark-read on open |
-| **M4: Core Interactions** | +1 session | Star/unstar, mark read/unread, keyboard shortcuts, unread counts |
-| **M5: Polish** | +1 session | Empty states, error handling, loading states, visual polish pass |
-| **M6: MVP Complete** | +1 session | Add/delete feeds, full reading flow, keyboard nav, dark mode polished (light toggle deferred) |
-
----
-
-## First Coding Task
-
-**Start with the project skeleton and database:**
-
-1. Initialize a new Next.js 15 project with TypeScript and Tailwind CSS v4
-2. Install core dependencies (Prisma, shadcn/ui setup, Lucide, react-resizable-panels, rss-parser, dompurify, isomorphic-dompurify, date-fns)
-3. Set up Prisma with SQLite and the Feed + Article schema
-4. Create the `npm run setup` script
-5. Set up the dark-mode-first CSS variable system
-6. Build the three-pane `AppShell` layout with resizable panels
-7. Create the CLAUDE.md for the new repo
-8. Verify: `npm run setup && npm run dev` shows the empty three-pane layout at localhost:3000
-
-### Exact Commands to Initialize
-
-```bash
-# Create project
-npx create-next-app@latest feed --typescript --tailwind --eslint --app --src-dir --no-import-alias --turbopack
-
-cd feed
-
-# Core dependencies
-npm install prisma @prisma/client rss-parser isomorphic-dompurify date-fns react-resizable-panels lucide-react class-variance-authority clsx tailwind-merge
-
-# Dev dependencies
-npm install -D @types/dompurify vitest @vitejs/plugin-react @testing-library/react @testing-library/dom jsdom vite-tsconfig-paths tw-animate-css
-
-# Initialize Prisma with SQLite
-npx prisma init --datasource-provider sqlite
-
-# Initialize shadcn/ui
-npx shadcn@latest init
-# When prompted: style = New York, base color = Neutral, CSS variables = yes
-
-# Add shadcn components needed for MVP
-npx shadcn@latest add button dialog input scroll-area separator
-
-# Add resizable (may need manual copy if not in shadcn registry)
-# If not available via CLI, copy from UIGen's src/components/ui/resizable.tsx
-
-# Set up scripts in package.json:
-# "setup": "npm install && npx prisma generate && npx prisma migrate deploy"
-# "dev": "next dev --turbopack"
-# Note: 'migrate deploy' is used in setup so fresh clones succeed in
-# non-interactive shells. Creating a new migration after a schema
-# change still uses 'npx prisma migrate dev --name <name>'.
-
-# Create the schema, run migrations
-npx prisma migrate dev --name init
-
-# Verify
-npm run dev
-```
-
-### Post-Init Checklist
-
-- [ ] `npm run setup` works cleanly from a fresh clone
-- [ ] `npm run dev` starts without errors
-- [ ] Visiting `http://localhost:3000` shows the app
-- [ ] Dark mode is the default appearance
-- [ ] Three-pane layout is visible with resizable handles
-- [ ] Prisma Studio works: `npx prisma studio`
+| **M1: Skeleton** ✓ | End of first session | Project scaffolded, DB schema, one-command setup works, dev server runs with empty three-pane layout |
+| **M2: Feed Ingestion** ✓ | +1 session | Can add a feed URL, fetch articles, see them in the article list |
+| **M3: Reading** ✓ | +1 session | Click an article → see rendered content in reading pane, mark-read on open |
+| **M4: Core Interactions** ✓ | +1 session | Star/unstar, mark read/unread, keyboard shortcuts, unread counts |
+| **M5: Polish** ✓ | +1 session | Empty states, error handling, loading states, visual polish pass |
+| **M6: MVP Complete** ✓ | +1 session | Add/delete feeds, full reading flow, keyboard nav, dark mode polished (light toggle deferred) |
 
 ---
 
@@ -608,7 +545,7 @@ npm run dev
 ### Component Patterns
 - Small, focused components (one file = one component)
 - Props interfaces defined in the same file
-- UI components in `components/ui/` (shadcn primitives)
+- UI components in `components/ui/` (@base-ui/react wrappers)
 - Feature components in `components/{feature}/`
 - No prop drilling beyond 2 levels — use Context or Server Components
 
@@ -694,16 +631,9 @@ Concrete proposals to evaluate when the relevant phase is active. Each one captu
 - Con: reader extraction per article at ingest time is network + CPU overhead; must be throttled and failure-tolerant.
 - Con: migration touches existing rows; backfill pass needed.
 
-### Retention policy — local, automatic article pruning
+### ~~Retention policy~~ — shipped (see Phase 5)
 
-**Status:** Shipped. Settings page at `/settings` with toggle (default off), configurable period (30/60/90/180/365 days), dry-run preview, and manual "Prune now" button. Auto-prune runs during the feed refresh cycle with a 23-hour cooldown. Preserves starred, highlighted, and unread articles. Deliberate deviation from original proposal: default is **off** (not on) to avoid destructive-by-default behavior.
-
-**Implementation:**
-- `Setting` model (key-value) stores `retention.enabled`, `retention.days`, `retention.lastRun`
-- `src/lib/retention.ts` — pure helpers (`cutoffDate`, `retentionWhere`)
-- `src/actions/retention.ts` — server actions (`getRetentionConfig`, `setRetentionConfig`, `previewRetention`, `pruneArticles`, `maybeAutoprune`)
-- `src/components/settings/RetentionSettings.tsx` — client component with toggle, period selector, preview, prune button
-- `src/actions/feeds.ts` — `runAutoprune()` called after `refreshDueFeeds`
+Default is **off** (not on as originally proposed) to avoid destructive-by-default behavior. Configurable period, dry-run preview, auto-prune during refresh cycle with 23-hour cooldown.
 
 ### Background refresher — closing the "app was closed for a week" gap
 
@@ -750,85 +680,3 @@ Show "Last fetched N days ago — some articles from this period may be unavaila
 
 **Explicitly rejected:** any paid/hosted archiver. Would violate the "no cloud, no accounts" constraint. Users who want deep history can integrate their own third-party account (Feedbin, Inoreader) via a later user-provided-key hook.
 
----
-
-## Prompt to Continue in the New Repo
-
-Copy this into a new Claude Code session after creating the empty repository:
-
-```
-I'm starting a new project called Feed — a local-first RSS reader.
-
-Read PROJECT_BLUEPRINT.md in this repo. It contains the complete specification, architecture, design system, and implementation plan.
-
-Start with the first coding task described in the blueprint:
-1. Set up the project skeleton (Next.js 15, TypeScript, Tailwind v4)
-2. Install all dependencies listed in the blueprint
-3. Set up Prisma with the Feed + Article schema
-4. Create the npm run setup script
-5. Build the dark-mode-first CSS variable system from the blueprint
-6. Build the three-pane AppShell layout with resizable panels
-7. Create the CLAUDE.md
-8. Verify everything works: npm run setup && npm run dev should show the empty three-pane dark layout at localhost:3000
-
-Follow the blueprint's tech stack, folder structure, and design tokens exactly. Dark mode is the default. Use the oklch color values specified in the blueprint.
-```
-
----
-
-## CLAUDE.md Template for the New Repo
-
-Include this as `CLAUDE.md` in the new repository:
-
-```markdown
-# CLAUDE.md
-
-## Commands
-
-\`\`\`bash
-npm run setup       # First-time: install deps, generate Prisma, run migrations
-npm run dev         # Dev server with Turbopack on http://localhost:3000
-npm run build       # Production build
-npm run lint        # ESLint
-npm run test        # Vitest test suite
-\`\`\`
-
-Run a single test:
-\`\`\`bash
-npx vitest run src/lib/__tests__/feed-parser.test.ts
-\`\`\`
-
-## Architecture
-
-Feed is a local RSS/Atom reader. No auth, no cloud, no API keys. SQLite stores everything.
-
-### Data Flow
-
-\`\`\`
-Add feed URL → POST /api/feeds → fetch RSS → parse → sanitize → store in SQLite
-Read articles → Server Components query Prisma → render three-pane layout
-Mark read/star → Server Actions → update SQLite → optimistic UI update
-\`\`\`
-
-### Key Directories
-
-- `src/app/` — Pages and API routes
-- `src/actions/` — Server Actions (mutations)
-- `src/components/` — React components (layout/, sidebar/, articles/, reader/, ui/)
-- `src/lib/` — Business logic (feed-parser, sanitize, prisma, utils)
-- `src/hooks/` — Custom React hooks
-- `prisma/` — Schema and migrations
-
-### Tech Stack
-
-- Next.js 15 (App Router), React 19, TypeScript 5
-- Tailwind CSS v4, shadcn/ui (New York), Lucide icons
-- react-resizable-panels for three-pane layout
-- Prisma 6 + SQLite
-- rss-parser + DOMPurify for feed processing
-- Vitest + React Testing Library
-
-### Design
-
-Dark-mode-first. CSS variables use oklch. See globals.css for the full token system.
-```
