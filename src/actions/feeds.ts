@@ -58,7 +58,10 @@ export async function refreshDueFeeds() {
   const now = Date.now();
   const due = feeds.filter((feed) => isFeedDue(feed, now));
 
-  if (due.length === 0) return { refreshed: 0 };
+  if (due.length === 0) {
+    await runAutoprune();
+    return { refreshed: 0 };
+  }
 
   const results = await Promise.allSettled(
     due.map((feed) => refreshFeed(feed.id)),
@@ -67,8 +70,23 @@ export async function refreshDueFeeds() {
   if (failed > 0) {
     console.error(`${failed}/${due.length} due feeds failed to refresh`);
   }
+
+  await runAutoprune();
+
   revalidatePath("/");
   return { refreshed: due.length };
+}
+
+async function runAutoprune() {
+  try {
+    const { maybeAutoprune } = await import("@/actions/retention");
+    const pruned = await maybeAutoprune();
+    if (pruned > 0) {
+      console.log(`Retention: pruned ${pruned} old articles`);
+    }
+  } catch (err) {
+    console.error("Retention prune failed:", err);
+  }
 }
 
 export async function refreshAllFeeds() {
