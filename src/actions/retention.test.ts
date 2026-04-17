@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cutoffDate, retentionWhere } from "./retention";
+import { cutoffDate, retentionWhere } from "@/lib/retention";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 

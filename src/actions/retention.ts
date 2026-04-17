@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { cutoffDate, retentionWhere } from "@/lib/retention";
 import { getSetting, getSettingBool, getSettingNumber, setSetting } from "@/lib/settings";
 
 export interface RetentionPreview {
@@ -31,19 +32,6 @@ export async function setRetentionConfig(
     setSetting("retention.enabled", String(config.enabled)),
     setSetting("retention.days", String(config.days)),
   ]);
-}
-
-export function cutoffDate(days: number, now = Date.now()): Date {
-  return new Date(now - days * 24 * 60 * 60 * 1000);
-}
-
-export function retentionWhere(cutoff: Date) {
-  return {
-    publishedAt: { lt: cutoff },
-    isRead: true as const,
-    isStarred: false as const,
-    highlights: { none: {} },
-  };
 }
 
 export async function previewRetention(
