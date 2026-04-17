@@ -515,7 +515,7 @@ These are things we are **intentionally avoiding**:
 - [x] Statistics (articles read per day/week, reading time)
 - [x] Settings page with key-value config (Setting model)
 - [x] Retention policy — automatic pruning of old read articles (configurable period, preserves starred/highlighted/unread, auto-prunes during refresh cycle)
-- [ ] Data backup and restore
+- [x] Data backup and restore (JSON export/import via Settings; full round-trip: folders, feeds, articles, highlights, settings)
 
 ---
 

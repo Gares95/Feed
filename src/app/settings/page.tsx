@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getRetentionConfig } from "@/actions/retention";
 import { RetentionSettings } from "@/components/settings/RetentionSettings";
+import { BackupSettings } from "@/components/settings/BackupSettings";
+import { Separator } from "@/components/ui/separator";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +24,11 @@ export default async function SettingsPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
         </div>
 
-        <RetentionSettings initial={retentionConfig} />
+        <div className="space-y-10">
+          <RetentionSettings initial={retentionConfig} />
+          <Separator />
+          <BackupSettings />
+        </div>
       </div>
     </div>
   );
