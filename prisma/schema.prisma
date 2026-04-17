@@ -64,6 +64,11 @@ model Article {
   @@index([isStarred])
 }
 
+model Setting {
+  key   String @id
+  value String
+}
+
 model Highlight {
   id         String   @id @default(cuid())
   articleId  String
