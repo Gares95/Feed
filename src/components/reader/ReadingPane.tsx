@@ -85,6 +85,24 @@ export function ReadingPane({ article, onToggleStar }: ReadingPaneProps) {
     applyHighlights(node, highlights);
   }, [highlights, readerMode, article?.id, article?.content]);
 
+  // Hide any image that fails to load (dead CDN, 404 from proxy, etc.) so we
+  // never show a broken-image icon. Re-runs whenever rendered content changes.
+  useEffect(() => {
+    const node = contentRef.current;
+    if (!node) return;
+    const imgs = node.querySelectorAll("img");
+    const hide = (img: HTMLImageElement) => {
+      img.style.display = "none";
+    };
+    imgs.forEach((img) => {
+      if (img.complete && img.naturalWidth === 0) {
+        hide(img);
+        return;
+      }
+      img.addEventListener("error", () => hide(img), { once: true });
+    });
+  }, [readerMode, readerContent, article?.id, article?.content]);
+
   const handleMouseUp = useCallback(() => {
     if (readerMode) return;
     const sel = window.getSelection();

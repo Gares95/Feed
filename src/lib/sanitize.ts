@@ -13,9 +13,12 @@ const ALLOWED_TAGS = [
 ];
 
 const ALLOWED_ATTR = [
-  "href", "src", "alt", "title", "width", "height", "class",
-  "target", "rel",
+  "href", "src", "srcset", "sizes", "alt", "title", "width", "height",
+  "class", "target", "rel",
 ];
+
+const PLACEHOLDER_PATTERN =
+  /placeholder|\/1x1\b|\/spacer\b|\/blank\.(gif|png)|transparent\.(gif|png)/i;
 
 export function sanitizeHtml(dirty: string): string {
   const clean = purify.sanitize(dirty, {
@@ -24,18 +27,76 @@ export function sanitizeHtml(dirty: string): string {
     ADD_ATTR: ["target"],
     ALLOW_DATA_ATTR: false,
   });
-  return rewriteImagesToProxy(clean);
+  return postProcessImages(clean);
 }
 
 /**
- * Rewrites <img src="http(s)://..."> to route through our local image proxy,
- * sidestepping mixed-content / hotlink-blocking issues. Relative and data: URLs
- * are left untouched.
+ * Post-processes sanitized HTML to:
+ *  1. Drop lazy-loading placeholder images (BBC's grey-placeholder.png, etc.)
+ *     that would otherwise render as small grey/white boxes.
+ *  2. Rewrite absolute image URLs (both src and srcset) through our local
+ *     image proxy to sidestep mixed-content / hotlink-blocking.
+ *  3. Remove figures left empty after step 1.
  */
-function rewriteImagesToProxy(html: string): string {
-  return html.replace(
-    /<img\b([^>]*?)\bsrc=("|')(https?:\/\/[^"']+)\2/gi,
-    (_match, attrs, quote, url) =>
-      `<img${attrs}src=${quote}/api/image-proxy?url=${encodeURIComponent(url)}${quote}`,
+function postProcessImages(html: string): string {
+  const doc = new window.DOMParser().parseFromString(
+    `<!DOCTYPE html><html><body>${html}</body></html>`,
+    "text/html",
   );
+
+  doc.body.querySelectorAll("img").forEach((img) => {
+    const src = img.getAttribute("src") ?? "";
+    const srcset = img.getAttribute("srcset") ?? "";
+
+    const srcIsPlaceholder = src !== "" && PLACEHOLDER_PATTERN.test(src);
+    const onlySrcsetAndPlaceholder =
+      src === "" && srcset !== "" && PLACEHOLDER_PATTERN.test(srcset);
+
+    if (srcIsPlaceholder || onlySrcsetAndPlaceholder) {
+      img.remove();
+      return;
+    }
+
+    if (/^https?:\/\//i.test(src)) {
+      img.setAttribute("src", proxyUrl(src));
+    }
+
+    if (srcset) {
+      img.setAttribute("srcset", rewriteSrcset(srcset));
+    }
+  });
+
+  doc.body.querySelectorAll("figure").forEach((fig) => {
+    if (!fig.querySelector("img") && !fig.textContent?.trim()) {
+      fig.remove();
+    }
+  });
+
+  return doc.body.innerHTML;
+}
+
+function proxyUrl(url: string): string {
+  return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+}
+
+/**
+ * srcset is a comma-separated list of "<url> <descriptor>" pairs,
+ * e.g. "https://a.jpg 480w, https://b.jpg 960w" or "https://a.jpg 2x".
+ * Each absolute URL gets routed through the image proxy; the descriptor
+ * is preserved verbatim.
+ */
+function rewriteSrcset(srcset: string): string {
+  return srcset
+    .split(",")
+    .map((part) => {
+      const trimmed = part.trim();
+      if (!trimmed) return "";
+      const match = trimmed.match(/^(\S+)(\s+.+)?$/);
+      if (!match) return trimmed;
+      const [, url, descriptor = ""] = match;
+      if (!/^https?:\/\//i.test(url)) return trimmed;
+      return `${proxyUrl(url)}${descriptor}`;
+    })
+    .filter(Boolean)
+    .join(", ");
 }
