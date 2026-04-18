@@ -29,9 +29,10 @@ A local-first RSS/Atom reader. Runs entirely on your machine, stores everything 
 - Feed health dashboard — frequency, freshness, error metrics
 - Retention policy — automatic pruning of old read articles (preserves starred, highlighted, unread)
 
-**Export**
+**Export & backup**
 - Starred articles as Markdown or JSON
 - OPML for feed subscriptions
+- Full data backup & restore — JSON export/import of feeds, articles, highlights, and settings
 
 **Interface**
 - Dark-mode-first design using oklch color tokens
@@ -91,10 +92,10 @@ Mutations     →  Server Actions → SQLite → optimistic UI update
 ```
 src/
 ├── app/              # Pages and API routes (App Router)
-│   ├── api/          # feeds, articles, opml, image-proxy, export
+│   ├── api/          # feeds, articles, opml, image-proxy, export, backup
 │   ├── health/       # Feed health dashboard
 │   ├── stats/        # Reading statistics
-│   ├── settings/     # Retention policy configuration
+│   ├── settings/     # Retention policy, backup & restore
 │   └── page.tsx      # Three-pane reader
 ├── actions/          # Server Actions (feeds, articles, folders, retention, highlights)
 ├── components/
@@ -102,7 +103,7 @@ src/
 │   ├── sidebar/      # Sidebar, FeedItem, AddFeedDialog, OpmlActions
 │   ├── articles/     # ArticleList, ArticleRow
 │   ├── reader/       # ReadingPane, ArticleHeader, TypographySettings
-│   ├── settings/     # RetentionSettings
+│   ├── settings/     # RetentionSettings, BackupSettings
 │   └── ui/           # shadcn primitives
 ├── lib/              # feed-parser, sanitize, retention, settings, queries, …
 ├── hooks/            # useKeyboardShortcuts, useAutoRefresh, …
