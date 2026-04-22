@@ -44,6 +44,10 @@ function postProcessImages(html: string): string {
     "text/html",
   );
 
+  doc.body.querySelectorAll("a[href]").forEach((a) => {
+    a.setAttribute("rel", "noopener noreferrer nofollow");
+  });
+
   doc.body.querySelectorAll("img").forEach((img) => {
     const src = img.getAttribute("src") ?? "";
     const srcset = img.getAttribute("srcset") ?? "";

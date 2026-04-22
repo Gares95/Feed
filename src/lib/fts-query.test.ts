@@ -29,4 +29,12 @@ describe("buildFtsQuery", () => {
   it("collapses repeated whitespace", () => {
     expect(buildFtsQuery("  foo   bar  ")).toBe('"foo"* "bar"*');
   });
+
+  it("returns null when input exceeds the length cap", () => {
+    expect(buildFtsQuery("a".repeat(201))).toBeNull();
+  });
+
+  it("accepts input exactly at the length cap", () => {
+    expect(buildFtsQuery("a".repeat(200))).toBe(`"${"a".repeat(200)}"*`);
+  });
 });

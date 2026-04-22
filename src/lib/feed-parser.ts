@@ -1,17 +1,13 @@
 import Parser from "rss-parser";
 import { sanitizeHtml } from "./sanitize";
+import { safeFetch } from "./safe-fetch";
 
 type CustomItem = { "content:encoded"?: string };
 type FeedItem = Parser.Item & CustomItem;
 
 const parser = new Parser<Record<string, unknown>, CustomItem>({
-  timeout: 10000,
   customFields: {
     item: ["content:encoded"],
-  },
-  headers: {
-    "User-Agent": "Feed/1.0 (Local RSS Reader)",
-    Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml",
   },
 });
 
@@ -46,7 +42,13 @@ function extractImageUrl(item: FeedItem): string | null {
 export async function parseFeed(
   feedUrl: string
 ): Promise<{ feed: ParsedFeed; articles: ParsedArticle[] }> {
-  const result = await parser.parseURL(feedUrl);
+  const fetched = await safeFetch(feedUrl, {
+    headers: { "User-Agent": "Feed/1.0 (Local RSS Reader)" },
+    accept: "application/rss+xml, application/atom+xml, application/xml, text/xml",
+    maxBytes: 10 * 1024 * 1024,
+    timeoutMs: 10_000,
+  });
+  const result = await parser.parseString(fetched.text());
 
   const feed: ParsedFeed = {
     title: result.title || feedUrl,

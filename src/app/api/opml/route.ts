@@ -19,6 +19,8 @@ export async function GET() {
   });
 }
 
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -28,6 +30,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "No OPML file provided" },
         { status: 400 },
+      );
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json(
+        { error: `OPML file exceeds ${MAX_UPLOAD_BYTES} bytes` },
+        { status: 413 },
       );
     }
 

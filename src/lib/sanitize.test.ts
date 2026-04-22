@@ -57,4 +57,17 @@ describe("sanitizeHtml", () => {
     );
     expect(out).toContain("<figcaption>A caption</figcaption>");
   });
+
+  it("forces rel=noopener noreferrer nofollow on anchors", () => {
+    const out = sanitizeHtml(
+      '<a href="https://evil.test/" rel="opener">link</a>',
+    );
+    expect(out).toContain('rel="noopener noreferrer nofollow"');
+    expect(out).not.toContain('rel="opener"');
+  });
+
+  it("adds rel even when input omits it", () => {
+    const out = sanitizeHtml('<a href="https://x.test/">x</a>');
+    expect(out).toContain('rel="noopener noreferrer nofollow"');
+  });
 });

@@ -13,6 +13,8 @@ export async function GET() {
   });
 }
 
+const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
+
 export async function POST(request: NextRequest) {
   let data: unknown;
 
@@ -21,6 +23,12 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file") as File | null;
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json(
+        { error: `Backup file exceeds ${MAX_UPLOAD_BYTES} bytes` },
+        { status: 413 },
+      );
     }
     const text = await file.text();
     data = JSON.parse(text);

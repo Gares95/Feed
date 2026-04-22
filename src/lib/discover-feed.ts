@@ -1,3 +1,5 @@
+import { safeFetch, SafeFetchError } from "@/lib/safe-fetch";
+
 const BROWSER_UA =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
@@ -47,23 +49,25 @@ function attr(tag: string, name: string): string | null {
  * Throws with a clear message if discovery fails.
  */
 export async function discoverFeedUrl(input: string): Promise<string> {
-  const res = await fetch(input, {
-    redirect: "follow",
-    headers: {
-      "User-Agent": BROWSER_UA,
-      Accept:
+  let result;
+  try {
+    result = await safeFetch(input, {
+      headers: { "User-Agent": BROWSER_UA },
+      accept:
         "application/rss+xml, application/atom+xml, application/xml, text/xml, text/html;q=0.9, */*;q=0.5",
-    },
-    signal: AbortSignal.timeout(10000),
-  });
-
-  if (!res.ok) {
-    const err = new Error(`Status code ${res.status}`);
-    (err as Error & { status?: number }).status = res.status;
+      maxBytes: 2 * 1024 * 1024,
+      timeoutMs: 10_000,
+    });
+  } catch (err) {
+    if (err instanceof SafeFetchError && err.code === "bad_status" && err.status) {
+      const wrapped = new Error(`Status code ${err.status}`);
+      (wrapped as Error & { status?: number }).status = err.status;
+      throw wrapped;
+    }
     throw err;
   }
 
-  const contentType = (res.headers.get("content-type") || "").toLowerCase();
+  const contentType = (result.headers.get("content-type") || "").toLowerCase();
 
   // Already a feed: return the (possibly redirected) final URL.
   if (
@@ -72,13 +76,12 @@ export async function discoverFeedUrl(input: string): Promise<string> {
     contentType.includes("atom") ||
     contentType.includes("application/json")
   ) {
-    return res.url || input;
+    return result.url || input;
   }
 
   // HTML: scan for a feed link.
   if (contentType.includes("html")) {
-    const html = await res.text();
-    const found = findFeedLinkInHtml(html, res.url || input);
+    const found = findFeedLinkInHtml(result.text(), result.url || input);
     if (found) return found;
     throw new Error(
       "This URL doesn't return a feed and no <link rel=\"alternate\"> was found on the page. Try the site's RSS/Atom URL directly.",
@@ -86,5 +89,5 @@ export async function discoverFeedUrl(input: string): Promise<string> {
   }
 
   // Unknown content type — let the parser try the URL itself.
-  return res.url || input;
+  return result.url || input;
 }

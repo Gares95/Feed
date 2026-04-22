@@ -1,8 +1,7 @@
 import { NextRequest } from "next/server";
+import { safeFetch, SafeFetchError } from "@/lib/safe-fetch";
 
-const FETCH_TIMEOUT_MS = 10_000;
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
-const ALLOWED_PROTOCOLS = new Set(["http:", "https:"]);
 
 export async function GET(request: NextRequest) {
   const target = request.nextUrl.searchParams.get("url");
@@ -10,53 +9,33 @@ export async function GET(request: NextRequest) {
     return new Response("Missing url", { status: 400 });
   }
 
-  let parsed: URL;
   try {
-    parsed = new URL(target);
-  } catch {
-    return new Response("Invalid url", { status: 400 });
-  }
-  if (!ALLOWED_PROTOCOLS.has(parsed.protocol)) {
-    return new Response("Disallowed protocol", { status: 400 });
-  }
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-
-  try {
-    const upstream = await fetch(parsed.toString(), {
-      headers: {
-        "User-Agent": "Feed/1.0 (Local RSS Reader)",
-        Accept: "image/*",
-      },
-      signal: controller.signal,
-      redirect: "follow",
+    const result = await safeFetch(target, {
+      accept: "image/*",
+      maxBytes: MAX_BYTES,
     });
 
-    if (!upstream.ok || !upstream.body) {
-      return new Response("Upstream failed", { status: 502 });
-    }
-
-    const contentType = upstream.headers.get("content-type") ?? "";
+    const contentType = result.headers.get("content-type") ?? "";
     if (!contentType.startsWith("image/")) {
       return new Response("Not an image", { status: 415 });
     }
 
-    const contentLength = Number(upstream.headers.get("content-length") ?? 0);
-    if (contentLength && contentLength > MAX_BYTES) {
-      return new Response("Image too large", { status: 413 });
-    }
-
-    return new Response(upstream.body, {
+    return new Response(result.body as BodyInit, {
       status: 200,
       headers: {
         "Content-Type": contentType,
         "Cache-Control": "public, max-age=86400, immutable",
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof SafeFetchError) {
+      if (err.code === "bad_url" || err.code === "bad_protocol") {
+        return new Response(err.message, { status: 400 });
+      }
+      if (err.code === "too_large") {
+        return new Response("Image too large", { status: 413 });
+      }
+    }
     return new Response("Fetch error", { status: 502 });
-  } finally {
-    clearTimeout(timeout);
   }
 }

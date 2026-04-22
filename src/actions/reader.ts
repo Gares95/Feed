@@ -4,8 +4,7 @@ import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import { prisma } from "@/lib/prisma";
 import { sanitizeHtml } from "@/lib/sanitize";
-
-const FETCH_TIMEOUT_MS = 15_000;
+import { safeFetch } from "@/lib/safe-fetch";
 
 export async function extractArticle(
   articleId: string,
@@ -16,25 +15,15 @@ export async function extractArticle(
   });
   if (!article?.link) throw new Error("Article has no link to extract from");
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-
-  let html: string;
-  try {
-    const res = await fetch(article.link, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; Feed/1.0; Local RSS Reader)",
-        Accept: "text/html,application/xhtml+xml",
-      },
-      signal: controller.signal,
-      redirect: "follow",
-    });
-    if (!res.ok) throw new Error(`Upstream returned ${res.status}`);
-    html = await res.text();
-  } finally {
-    clearTimeout(timeout);
-  }
+  const result = await safeFetch(article.link, {
+    accept: "text/html,application/xhtml+xml",
+    headers: {
+      "User-Agent": "Mozilla/5.0 (compatible; Feed/1.0; Local RSS Reader)",
+    },
+    maxBytes: 5 * 1024 * 1024,
+    timeoutMs: 15_000,
+  });
+  const html = result.text();
 
   const dom = new JSDOM(html, { url: article.link });
   const reader = new Readability(dom.window.document);
