@@ -51,7 +51,13 @@ export function ArticleRow({
         {title}
       </span>
       <span className="text-xs text-muted-foreground">
-        {feedTitle} · {timeAgo}
+        {feedTitle} ·{" "}
+        <time
+          dateTime={new Date(publishedAt).toISOString()}
+          suppressHydrationWarning
+        >
+          {timeAgo}
+        </time>
       </span>
     </button>
   );
