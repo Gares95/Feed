@@ -63,18 +63,18 @@ describe("validateBackup", () => {
   });
 
   it("rejects missing exportedAt", () => {
-    const { exportedAt: _, ...rest } = minimalBackup;
+    const { exportedAt: _exportedAt, ...rest } = minimalBackup;
     expect(validateBackup(rest)).toBe(false);
   });
 
   it("rejects missing required arrays", () => {
-    const { folders: _, ...noFolders } = minimalBackup;
+    const { folders: _folders, ...noFolders } = minimalBackup;
     expect(validateBackup(noFolders)).toBe(false);
 
-    const { articles: __, ...noArticles } = minimalBackup;
+    const { articles: _articles, ...noArticles } = minimalBackup;
     expect(validateBackup(noArticles)).toBe(false);
 
-    const { highlights: ___, ...noHighlights } = minimalBackup;
+    const { highlights: _highlights, ...noHighlights } = minimalBackup;
     expect(validateBackup(noHighlights)).toBe(false);
   });
 
