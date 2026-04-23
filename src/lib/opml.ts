@@ -39,6 +39,10 @@ ${outlines}
 `;
 }
 
+// jsdom's XML parser ignores external entity declarations, SYSTEM URLs,
+// and billion-laughs-style DTD expansion — see opml.test.ts for the
+// attack vectors we verify against. Keep using jsdom rather than a raw
+// XML parser that might expand entities.
 export function parseOpml(xml: string): OpmlOutline[] {
   const dom = new JSDOM(xml, { contentType: "text/xml" });
   const doc = dom.window.document;
