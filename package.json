@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack -H 127.0.0.1",
+    "dev:lan": "node -e \"console.error('\\u26a0\\ufe0f  Binding to 0.0.0.0 — API routes have no auth. Put this behind a reverse proxy if anyone else is on the network.')\" && next dev --turbopack -H 0.0.0.0",
     "build": "next build --turbopack",
     "start": "next start -H 127.0.0.1",
+    "start:lan": "node -e \"console.error('\\u26a0\\ufe0f  Binding to 0.0.0.0 — API routes have no auth. Put this behind a reverse proxy if anyone else is on the network.')\" && next start -H 0.0.0.0",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -132,7 +132,10 @@ prisma/
 
 Everything lives in `prisma/dev.db`. No telemetry, no third-party requests beyond fetching the feeds you subscribe to. Back up the project directory to back up all your data.
 
-The dev and production servers bind to `127.0.0.1` only, so the app is not reachable from other devices on your network. If you want LAN access (e.g. reading from your phone at home), run it behind a reverse proxy with its own auth (nginx basic-auth, Tailscale) rather than exposing the raw Node server — the API routes assume a single trusted user.
+The dev and production servers bind to `127.0.0.1` only, so the app is not reachable from other devices on your network. If you want LAN access (e.g. reading from your phone at home), you have two options:
+
+- **Recommended:** put `npm run dev` behind a reverse proxy (nginx basic-auth, Tailscale, Caddy with a password) and have the proxy handle auth.
+- **Quick and unauthenticated:** `npm run dev:lan` / `npm run start:lan` bind to `0.0.0.0`. No auth — anyone on the same network can read or destroy your data. Only use this on a network you trust.
 
 ## Roadmap
 
