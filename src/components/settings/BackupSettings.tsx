@@ -5,19 +5,91 @@ import { AlertTriangle, Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-type RestoreState = "idle" | "confirm" | "restoring" | "success" | "error";
+type RestoreState =
+  | "idle"
+  | "parsing"
+  | "confirm"
+  | "parse-error"
+  | "restoring"
+  | "success"
+  | "error";
+
+interface BackupPreview {
+  version: number | null;
+  exportedAt: string | null;
+  folders: number;
+  feeds: number;
+  articles: number;
+  highlights: number;
+  settings: number;
+}
+
+const EXPECTED_VERSION = 1;
+
+function parsePreview(text: string): BackupPreview | null {
+  try {
+    const data = JSON.parse(text);
+    if (typeof data !== "object" || data === null) return null;
+    const d = data as Record<string, unknown>;
+    return {
+      version: typeof d.version === "number" ? d.version : null,
+      exportedAt: typeof d.exportedAt === "string" ? d.exportedAt : null,
+      folders: Array.isArray(d.folders) ? d.folders.length : 0,
+      feeds: Array.isArray(d.feeds) ? d.feeds.length : 0,
+      articles: Array.isArray(d.articles) ? d.articles.length : 0,
+      highlights: Array.isArray(d.highlights) ? d.highlights.length : 0,
+      settings: Array.isArray(d.settings) ? d.settings.length : 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function formatExportedAt(iso: string | null): string {
+  if (!iso) return "unknown date";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "unknown date";
+  return d.toLocaleString();
+}
 
 export function BackupSettings() {
   const [restoreState, setRestoreState] = useState<RestoreState>("idle");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<BackupPreview | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
     setSelectedFile(file);
-    setRestoreState(file ? "confirm" : "idle");
     setErrorMsg("");
+    setPreview(null);
+
+    if (!file) {
+      setRestoreState("idle");
+      return;
+    }
+
+    setRestoreState("parsing");
+    let text: string;
+    try {
+      text = await file.text();
+    } catch {
+      setRestoreState("parse-error");
+      setErrorMsg("Could not read the selected file.");
+      return;
+    }
+
+    const p = parsePreview(text);
+    if (!p) {
+      setRestoreState("parse-error");
+      setErrorMsg(
+        "This file isn't a valid Feed backup. Expected a JSON document with folders, feeds, articles, highlights, and settings arrays.",
+      );
+      return;
+    }
+    setPreview(p);
+    setRestoreState("confirm");
   }
 
   async function handleRestore() {
@@ -45,6 +117,7 @@ export function BackupSettings() {
   function handleCancel() {
     setRestoreState("idle");
     setSelectedFile(null);
+    setPreview(null);
     setErrorMsg("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
@@ -104,17 +177,67 @@ export function BackupSettings() {
               </Button>
             )}
 
-            {restoreState === "confirm" && selectedFile && (
+            {restoreState === "parsing" && (
+              <p className="text-sm text-muted-foreground">
+                Reading backup file…
+              </p>
+            )}
+
+            {restoreState === "parse-error" && (
+              <div className="space-y-2">
+                <p className="text-sm text-destructive">{errorMsg}</p>
+                <Button variant="outline" size="sm" onClick={handleCancel}>
+                  Choose a different file
+                </Button>
+              </div>
+            )}
+
+            {restoreState === "confirm" && selectedFile && preview && (
               <div className="rounded-md border border-destructive/30 bg-destructive/5 p-4">
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-destructive">
                       This will replace all current data
                     </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
                       {selectedFile.name}
                     </p>
+
+                    <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Exported</dt>
+                        <dd>{formatExportedAt(preview.exportedAt)}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Feeds</dt>
+                        <dd>{preview.feeds.toLocaleString()}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Folders</dt>
+                        <dd>{preview.folders.toLocaleString()}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Articles</dt>
+                        <dd>{preview.articles.toLocaleString()}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Highlights</dt>
+                        <dd>{preview.highlights.toLocaleString()}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Settings</dt>
+                        <dd>{preview.settings.toLocaleString()}</dd>
+                      </div>
+                    </dl>
+
+                    {preview.version !== EXPECTED_VERSION && (
+                      <p className="mt-3 text-xs text-destructive">
+                        Backup version is {String(preview.version)}; this app
+                        expects version {EXPECTED_VERSION}. The server will
+                        refuse the restore.
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="mt-3 flex gap-2">
@@ -122,6 +245,7 @@ export function BackupSettings() {
                     variant="destructive"
                     size="sm"
                     onClick={handleRestore}
+                    disabled={preview.version !== EXPECTED_VERSION}
                   >
                     Restore
                   </Button>

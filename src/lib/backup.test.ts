@@ -84,4 +84,102 @@ describe("validateBackup", () => {
     );
     expect(validateBackup({ ...minimalBackup, settings: null })).toBe(false);
   });
+
+  const feed = (overrides: Record<string, unknown>) => ({
+    id: "feed1",
+    title: "T",
+    url: "https://blog.test/feed.xml",
+    siteUrl: null,
+    description: null,
+    favicon: null,
+    lastFetched: null,
+    errorCount: 0,
+    refreshInterval: null,
+    folderId: null,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+    ...overrides,
+  });
+  const article = (overrides: Record<string, unknown>) => ({
+    id: "a1",
+    feedId: "feed1",
+    guid: "g",
+    title: "t",
+    link: "https://blog.test/post",
+    content: "",
+    summary: null,
+    author: null,
+    imageUrl: null,
+    publishedAt: "2026-01-01T00:00:00.000Z",
+    isRead: false,
+    readAt: null,
+    isStarred: false,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    ...overrides,
+  });
+
+  it("rejects feeds with non-http(s) url", () => {
+    expect(
+      validateBackup({
+        ...minimalBackup,
+        feeds: [feed({ url: "file:///etc/passwd" })],
+      }),
+    ).toBe(false);
+    expect(
+      validateBackup({
+        ...minimalBackup,
+        feeds: [feed({ url: "javascript:alert(1)" })],
+      }),
+    ).toBe(false);
+  });
+
+  it("rejects feeds with malformed siteUrl", () => {
+    expect(
+      validateBackup({
+        ...minimalBackup,
+        feeds: [feed({ siteUrl: "not a url" })],
+      }),
+    ).toBe(false);
+  });
+
+  it("accepts feeds with null siteUrl and empty-string siteUrl", () => {
+    expect(
+      validateBackup({
+        ...minimalBackup,
+        feeds: [feed({ siteUrl: null })],
+      }),
+    ).toBe(true);
+    expect(
+      validateBackup({
+        ...minimalBackup,
+        feeds: [feed({ siteUrl: "" })],
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects articles with non-http(s) link or imageUrl", () => {
+    expect(
+      validateBackup({
+        ...minimalBackup,
+        feeds: [feed({})],
+        articles: [article({ link: "javascript:alert(1)" })],
+      }),
+    ).toBe(false);
+    expect(
+      validateBackup({
+        ...minimalBackup,
+        feeds: [feed({})],
+        articles: [article({ imageUrl: "data:image/png;base64,AAAA" })],
+      }),
+    ).toBe(false);
+  });
+
+  it("rejects a feed entry that is not an object", () => {
+    expect(
+      validateBackup({ ...minimalBackup, feeds: ["not-an-object"] }),
+    ).toBe(false);
+    expect(
+      validateBackup({ ...minimalBackup, feeds: [null] }),
+    ).toBe(false);
+  });
 });

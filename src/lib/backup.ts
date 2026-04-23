@@ -127,6 +127,22 @@ export async function createBackup(): Promise<BackupData> {
   };
 }
 
+function isHttpUrl(u: unknown): boolean {
+  if (typeof u !== "string" || u.length === 0) return false;
+  try {
+    const url = new URL(u);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+// Accept null / empty string (both exist in real exports) OR a valid http(s) URL.
+function isOptionalHttpUrl(u: unknown): boolean {
+  if (u === null || u === undefined || u === "") return true;
+  return isHttpUrl(u);
+}
+
 export function validateBackup(data: unknown): data is BackupData {
   if (typeof data !== "object" || data === null) return false;
   const d = data as Record<string, unknown>;
@@ -137,6 +153,23 @@ export function validateBackup(data: unknown): data is BackupData {
   if (!Array.isArray(d.articles)) return false;
   if (!Array.isArray(d.highlights)) return false;
   if (!Array.isArray(d.settings)) return false;
+
+  // URL fields must be http(s) — stops a hand-crafted backup from injecting
+  // file://, javascript:, or other scheme payloads that our code would then
+  // happily pass to fetch() or an <a href=...>.
+  for (const feed of d.feeds) {
+    if (!feed || typeof feed !== "object") return false;
+    const f = feed as Record<string, unknown>;
+    if (!isHttpUrl(f.url)) return false;
+    if (!isOptionalHttpUrl(f.siteUrl)) return false;
+  }
+  for (const article of d.articles) {
+    if (!article || typeof article !== "object") return false;
+    const a = article as Record<string, unknown>;
+    if (!isOptionalHttpUrl(a.link)) return false;
+    if (!isOptionalHttpUrl(a.imageUrl)) return false;
+  }
+
   return true;
 }
 
