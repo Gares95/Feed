@@ -32,33 +32,63 @@ export async function getFolders() {
   return folders.map((f) => ({ id: f.id, name: f.name }));
 }
 
+export const ARTICLES_PAGE_SIZE = 100;
+
+export interface ArticleListItem {
+  id: string;
+  title: string;
+  feedTitle: string;
+  publishedAt: Date;
+  isRead: boolean;
+  isStarred: boolean;
+}
+
+export interface ArticlePage {
+  articles: ArticleListItem[];
+  // Pass this id back in `cursor` to fetch the next page; null means no more.
+  nextCursor: string | null;
+}
+
 export async function getArticles(options?: {
   feedId?: string;
   starredOnly?: boolean;
   since?: Date;
-}) {
+  cursor?: string;
+  limit?: number;
+}): Promise<ArticlePage> {
   const where: Record<string, unknown> = {};
   if (options?.feedId) where.feedId = options.feedId;
   if (options?.starredOnly) where.isStarred = true;
   if (options?.since) where.publishedAt = { gte: options.since };
 
-  const articles = await prisma.article.findMany({
+  const limit = options?.limit ?? ARTICLES_PAGE_SIZE;
+
+  // Keyset pagination: order by (publishedAt DESC, id DESC) so Prisma's
+  // cursor can hand us rows strictly after the cursor row. We fetch one
+  // extra to detect whether there's a next page without another query.
+  const rows = await prisma.article.findMany({
     where,
-    orderBy: { publishedAt: "desc" },
-    take: 100,
-    include: {
-      feed: { select: { title: true } },
-    },
+    orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+    cursor: options?.cursor ? { id: options.cursor } : undefined,
+    skip: options?.cursor ? 1 : 0,
+    take: limit + 1,
+    include: { feed: { select: { title: true } } },
   });
 
-  return articles.map((article) => ({
-    id: article.id,
-    title: article.title,
-    feedTitle: article.feed.title,
-    publishedAt: article.publishedAt,
-    isRead: article.isRead,
-    isStarred: article.isStarred,
-  }));
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+
+  return {
+    articles: page.map((article) => ({
+      id: article.id,
+      title: article.title,
+      feedTitle: article.feed.title,
+      publishedAt: article.publishedAt,
+      isRead: article.isRead,
+      isStarred: article.isStarred,
+    })),
+    nextCursor: hasMore ? page[page.length - 1].id : null,
+  };
 }
 
 export async function getArticleById(id: string) {

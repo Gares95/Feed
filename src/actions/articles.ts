@@ -2,7 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { searchArticles as searchArticlesQuery } from "@/lib/queries";
+import {
+  getArticles,
+  searchArticles as searchArticlesQuery,
+  type ArticlePage,
+} from "@/lib/queries";
+import { dateRangeToSince, type DateRange } from "@/lib/date-range";
 
 export async function markRead(articleId: string) {
   await prisma.article.update({
@@ -44,4 +49,18 @@ export async function markAllRead(feedId?: string) {
     data: { isRead: true, readAt: new Date() },
   });
   revalidatePath("/");
+}
+
+export async function loadMoreArticles(params: {
+  feedId?: string | null;
+  starred?: boolean;
+  range?: DateRange;
+  cursor: string;
+}): Promise<ArticlePage> {
+  return getArticles({
+    feedId: params.feedId ?? undefined,
+    starredOnly: params.starred ?? false,
+    since: dateRangeToSince(params.range ?? "all"),
+    cursor: params.cursor,
+  });
 }
