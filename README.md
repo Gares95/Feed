@@ -67,7 +67,7 @@ npx prisma studio   # Browse the SQLite database
 | Layer | Choice |
 |---|---|
 | Framework | Next.js 15 (App Router), React 19, TypeScript 5 (strict) |
-| Styling | Tailwind CSS v4, shadcn/ui (New York), Lucide icons |
+| Styling | Tailwind CSS v4, @base-ui/react (base-nova via shadcn CLI), Lucide icons |
 | Database | Prisma 6 + SQLite (single file at `prisma/dev.db`) |
 | Feed parsing | rss-parser, DOMPurify + jsdom for HTML sanitization |
 | Layout | react-resizable-panels |
@@ -139,7 +139,7 @@ The dev and production servers bind to `127.0.0.1` only, so the app is not reach
 
 ## Roadmap
 
-See [`PROJECT_BLUEPRINT.md`](./PROJECT_BLUEPRINT.md) for the full phased roadmap, design tokens, database schema, and architectural rationale. Phases 1-3 and most of Phase 5 are complete. Phase 4 (optional AI features via Ollama or user-provided API keys) is intentionally deferred.
+See [`PROJECT_BLUEPRINT.md`](./PROJECT_BLUEPRINT.md) for the full phased roadmap, design tokens, database schema, and architectural rationale. Phases 1–3 (core reader, organization, and reading experience) are complete; Phase 4 (power-user features — highlights, backup/restore, retention, stats) is mostly shipped. AI features are not on the roadmap — see the Anti-Goals section of the blueprint for the reasoning.
 
 ## License
 
