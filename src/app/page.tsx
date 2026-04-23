@@ -17,7 +17,7 @@ export default async function Home({ searchParams }: PageProps) {
   const range: DateRange = isDateRange(params.range) ? params.range : "all";
   const since = dateRangeToSince(range);
 
-  const [feeds, folders, totalUnread, starredCount, articles] = await Promise.all([
+  const [feeds, folders, totalUnread, starredCount, articlePage] = await Promise.all([
     getFeedsWithCounts(),
     getFolders(),
     getTotalUnread(),
@@ -33,7 +33,10 @@ export default async function Home({ searchParams }: PageProps) {
       folders={folders}
       totalUnread={totalUnread}
       starredCount={starredCount}
-      initialArticles={articles}
+      initialArticles={articlePage.articles}
+      initialNextCursor={articlePage.nextCursor}
+      initialFeedId={params.feedId ?? null}
+      initialStarred={params.starred === "true"}
       initialArticle={null}
       initialDateRange={range}
     />

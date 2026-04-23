@@ -1,6 +1,15 @@
 "use client";
 
-import { AlertCircle, CheckCheck, FileText, Inbox, RefreshCw, Search, X } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCheck,
+  FileText,
+  Inbox,
+  Loader2,
+  RefreshCw,
+  Search,
+  X,
+} from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -31,6 +40,9 @@ interface ArticleListProps {
   searchError: string | null;
   hasFeeds: boolean;
   onRefreshAll: () => void;
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  onLoadMore: () => void;
 }
 
 export function ArticleList({
@@ -47,6 +59,9 @@ export function ArticleList({
   searchError,
   hasFeeds,
   onRefreshAll,
+  hasMore,
+  isLoadingMore,
+  onLoadMore,
 }: ArticleListProps) {
   const hasUnread = articles.some((a) => !a.isRead);
   return (
@@ -161,6 +176,26 @@ export function ArticleList({
               onSelect={onSelectArticle}
             />
           ))}
+          {hasMore && (
+            <div className="flex justify-center border-t p-3">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5"
+                onClick={onLoadMore}
+                disabled={isLoadingMore}
+              >
+                {isLoadingMore ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Loading…
+                  </>
+                ) : (
+                  "Load more articles"
+                )}
+              </Button>
+            </div>
+          )}
         </ScrollArea>
       )}
     </div>

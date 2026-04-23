@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useTransition } from "react";
+import { useState, useCallback, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
   refreshFeed,
 } from "@/actions/feeds";
 import {
+  loadMoreArticles,
   markAllRead,
   markRead,
   markUnread,
@@ -43,6 +44,9 @@ interface AppShellProps {
   totalUnread: number;
   starredCount: number;
   initialArticles: ArticleWithFeed[];
+  initialNextCursor: string | null;
+  initialFeedId: string | null;
+  initialStarred: boolean;
   initialArticle: ArticleFull | null;
   initialDateRange: DateRange;
 }
@@ -53,19 +57,34 @@ export function AppShell({
   totalUnread,
   starredCount,
   initialArticles,
+  initialNextCursor,
+  initialFeedId,
+  initialStarred,
   initialArticle,
   initialDateRange,
 }: AppShellProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const [selectedFeedId, setSelectedFeedId] = useState<string | null>(null);
-  const [isStarredView, setIsStarredView] = useState(false);
+  const [selectedFeedId, setSelectedFeedId] = useState<string | null>(
+    initialFeedId,
+  );
+  const [isStarredView, setIsStarredView] = useState(initialStarred);
   const [dateRange, setDateRange] = useState<DateRange>(initialDateRange);
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(
     initialArticle?.id ?? null
   );
-  const articles = initialArticles;
+  const [articles, setArticles] = useState<ArticleWithFeed[]>(initialArticles);
+  const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Reset the accumulated list whenever the server renders a new filter view
+  // (feed change, starred toggle, date range, or mutation revalidation).
+  useEffect(() => {
+    setArticles(initialArticles);
+    setNextCursor(initialNextCursor);
+    setIsLoadingMore(false);
+  }, [initialArticles, initialNextCursor]);
   const [currentArticle, setCurrentArticle] = useState<ArticleFull | null>(
     initialArticle
   );
@@ -141,10 +160,9 @@ export function AppShell({
     setMobileView("reader");
 
     // Mark as read optimistically
-    const articleInList = articles.find((a) => a.id === articleId);
-    if (articleInList && !articleInList.isRead) {
-      articleInList.isRead = true;
-    }
+    setArticles((prev) =>
+      prev.map((a) => (a.id === articleId && !a.isRead ? { ...a, isRead: true } : a)),
+    );
 
     // Fetch full article content
     try {
@@ -205,6 +223,25 @@ export function AppShell({
       refresh();
     } finally {
       setIsRefreshing(false);
+    }
+  }
+
+  async function handleLoadMore() {
+    if (!nextCursor || isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      const page = await loadMoreArticles({
+        feedId: selectedFeedId,
+        starred: isStarredView,
+        range: dateRange,
+        cursor: nextCursor,
+      });
+      setArticles((prev) => [...prev, ...page.articles]);
+      setNextCursor(page.nextCursor);
+    } catch (err) {
+      console.error("Failed to load more articles:", err);
+    } finally {
+      setIsLoadingMore(false);
     }
   }
 
@@ -343,6 +380,9 @@ export function AppShell({
               searchError={search.error}
               hasFeeds={feeds.length > 0}
               onRefreshAll={handleRefreshAll}
+              hasMore={!search.results && nextCursor !== null}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={handleLoadMore}
             />
           )}
           {mobileView === "reader" && (
@@ -409,6 +449,9 @@ export function AppShell({
             searchError={search.error}
             hasFeeds={feeds.length > 0}
             onRefreshAll={handleRefreshAll}
+            hasMore={!search.results && nextCursor !== null}
+            isLoadingMore={isLoadingMore}
+            onLoadMore={handleLoadMore}
           />
         </ResizablePanel>
 
