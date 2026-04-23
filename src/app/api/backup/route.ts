@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createBackup, validateBackup, restoreBackup } from "@/lib/backup";
+import { isSameOriginRequest } from "@/lib/csrf";
 
 export async function GET() {
   const backup = await createBackup();
@@ -16,6 +17,10 @@ export async function GET() {
 const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   let data: unknown;
 
   try {

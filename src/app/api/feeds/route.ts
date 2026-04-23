@@ -3,8 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { parseFeed } from "@/lib/feed-parser";
 import { discoverFeedUrl } from "@/lib/discover-feed";
 import { explainFeedError } from "@/lib/feed-error";
+import { isSameOriginRequest } from "@/lib/csrf";
 
 export async function POST(request: NextRequest) {
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   try {
     const { url } = await request.json();
 
