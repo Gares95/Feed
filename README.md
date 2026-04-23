@@ -132,6 +132,8 @@ prisma/
 
 Everything lives in `prisma/dev.db`. No telemetry, no third-party requests beyond fetching the feeds you subscribe to. Back up the project directory to back up all your data.
 
+The dev and production servers bind to `127.0.0.1` only, so the app is not reachable from other devices on your network. If you want LAN access (e.g. reading from your phone at home), run it behind a reverse proxy with its own auth (nginx basic-auth, Tailscale) rather than exposing the raw Node server — the API routes assume a single trusted user.
+
 ## Roadmap
 
 See [`PROJECT_BLUEPRINT.md`](./PROJECT_BLUEPRINT.md) for the full phased roadmap, design tokens, database schema, and architectural rationale. Phases 1-3 and most of Phase 5 are complete. Phase 4 (optional AI features via Ollama or user-provided API keys) is intentionally deferred.

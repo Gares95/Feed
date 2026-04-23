@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateOpml, parseOpml } from "@/lib/opml";
 import { parseFeed } from "@/lib/feed-parser";
+import { isSameOriginRequest } from "@/lib/csrf";
 
 export async function GET() {
   const feeds = await prisma.feed.findMany({
@@ -22,6 +23,10 @@ export async function GET() {
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get("file");
