@@ -276,6 +276,7 @@ feed/
 │   ├── lib/
 │   │   ├── prisma.ts               # Prisma client singleton
 │   │   ├── utils.ts                # cn() utility
+│   │   ├── safe-fetch.ts           # SSRF-safe outbound HTTP (DNS + CIDR checks, redirect walk, byte cap)
 │   │   ├── feed-parser.ts          # RSS/Atom fetch + parse + sanitize
 │   │   ├── sanitize.ts             # DOMPurify HTML sanitization
 │   │   ├── settings.ts             # Key-value settings helpers (get/set/getNumber/getBool)
@@ -562,10 +563,12 @@ These are things we are **intentionally avoiding**:
 - Focus tests on behavior, not implementation
 
 ### Security
-- Sanitize ALL feed HTML content with DOMPurify before rendering
+- Sanitize ALL feed HTML content with DOMPurify before rendering; the post-sanitize DOM pass also overwrites `rel` on every `<a href>` to `noopener noreferrer nofollow` to neutralise tab-nabbing and block Referer leakage to third parties.
 - Never use `dangerouslySetInnerHTML` without prior sanitization
 - Server-side feed fetching only (no client-side fetch of external URLs)
-- Validate feed URLs server-side before fetching
+- **All outbound server-side HTTP requests go through `lib/safe-fetch.ts`** — it rejects non-http(s) schemes, resolves hostnames and blocks any DNS result in a loopback / RFC1918 / link-local / cloud-metadata range (IPv4 + IPv6, including `::ffff:` mapped v4), walks redirects manually so each hop is revalidated, and streams the body with a byte cap. Treat direct `fetch()` of attacker-controllable URLs (feed URLs, article links, image URLs) as a bug.
+- Cap every upload route by size before reading the body (current caps: 100 MB backup restore, 5 MB OPML import) to stop memory-exhaustion via arbitrary file uploads.
+- Cap FTS5 MATCH input length (200 chars) so user input can't hand SQLite an unbounded query expression.
 
 ### Performance
 - SQLite indexes on frequently queried columns (feedId, publishedAt, isRead, isStarred)

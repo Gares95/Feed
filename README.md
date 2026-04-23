@@ -82,8 +82,9 @@ Mutations     →  Server Actions → SQLite → optimistic UI update
 ```
 
 - **Server-side feed fetching only** — no client-side RSS fetches (CORS/security)
+- **SSRF-safe outbound HTTP** — every server-side request (feed fetch, article extraction, image proxy, feed discovery) runs through `lib/safe-fetch.ts`, which resolves DNS and blocks loopback/RFC1918/link-local/cloud-metadata ranges, revalidates each redirect, and caps response size
 - **Full article HTML stored in SQLite** — reading is instant, no network needed
-- **All feed HTML sanitized with DOMPurify** before rendering
+- **All feed HTML sanitized with DOMPurify** before rendering; anchors are forced to `rel="noopener noreferrer nofollow"` to neutralise tab-nabbing and block Referer leakage
 - **Server Actions for mutations** — API routes only for complex server-only operations
 - **No client state library** — React Context for UI state, Server Components for data
 

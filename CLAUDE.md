@@ -39,7 +39,7 @@ Additional pages: `/health` (feed health dashboard), `/stats` (reading statistic
 - `src/app/` — Pages and API routes (App Router)
 - `src/actions/` — Server Actions for mutations (feeds.ts, articles.ts, folders.ts, highlights.ts, reader.ts, retention.ts)
 - `src/components/` — React components organized by feature (layout/, sidebar/, articles/, reader/, ui/); `CommandPalette.tsx` at this level is the global keyboard-driven palette
-- `src/lib/` — Business logic: `queries.ts` (all read queries used by Server Components), `feed-parser.ts`, `sanitize.ts`, `prisma.ts`, `fts-query.ts` (FTS builder), `feed-health.ts`, `feed-schedule.ts`, `highlights.ts`, `opml.ts`, `retention.ts`, `stats.ts`, `settings.ts`, `reading-time.ts`, `group-feeds.ts`, `discover-feed.ts`, `export-starred.ts`
+- `src/lib/` — Business logic: `queries.ts` (all read queries used by Server Components), `safe-fetch.ts` (SSRF-safe outbound HTTP), `feed-parser.ts`, `sanitize.ts`, `prisma.ts`, `fts-query.ts` (FTS builder), `feed-health.ts`, `feed-schedule.ts`, `highlights.ts`, `opml.ts`, `retention.ts`, `stats.ts`, `settings.ts`, `reading-time.ts`, `group-feeds.ts`, `discover-feed.ts`, `export-starred.ts`
 - `src/hooks/` — Custom React hooks (keyboard shortcuts)
 - `prisma/` — Schema and migrations
 
@@ -60,7 +60,9 @@ Additional pages: `/health` (feed health dashboard), `/stats` (reading statistic
 - **Server-side feed fetching only** — never fetch RSS from client (CORS/security)
 - **Full article content stored in SQLite** — reading is instant, no network request needed
 - **No client state management library** — React Context for UI state, Server Components for data
-- **All feed HTML sanitized with DOMPurify before rendering** — never use `dangerouslySetInnerHTML` without prior sanitization
+- **All feed HTML sanitized with DOMPurify before rendering** — never use `dangerouslySetInnerHTML` without prior sanitization; the sanitize pass also forces `rel="noopener noreferrer nofollow"` on every anchor
+- **All outbound server-side HTTP goes through `lib/safe-fetch.ts`** — never call `fetch()` directly on attacker-controllable URLs (feed URLs, article links, image URLs, redirect targets). `safeFetch` resolves DNS, blocks loopback/RFC1918/link-local/cloud-metadata ranges, revalidates every redirect hop, and caps response size.
+- **Upload routes must cap size before reading the body** — see `api/backup/route.ts` and `api/opml/route.ts` for the pattern (reject with 413 when `file.size` exceeds the cap)
 
 ### Design
 
