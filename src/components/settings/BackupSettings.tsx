@@ -232,11 +232,19 @@ export function BackupSettings() {
                     </dl>
 
                     {preview.version !== EXPECTED_VERSION && (
-                      <p className="mt-3 text-xs text-destructive">
-                        Backup version is {String(preview.version)}; this app
-                        expects version {EXPECTED_VERSION}. The server will
-                        refuse the restore.
-                      </p>
+                      <div className="mt-3 space-y-1 text-xs text-destructive">
+                        <p>
+                          This backup uses format v{String(preview.version)},
+                          but this version of Feed reads format v
+                          {EXPECTED_VERSION}.
+                        </p>
+                        <p>
+                          These formats aren&apos;t compatible — restoring
+                          could corrupt your database, so it&apos;s blocked.
+                          Run the restore in a matching version of Feed, or
+                          export a fresh backup from this installation.
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>
