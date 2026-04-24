@@ -15,7 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArticleRow } from "./ArticleRow";
 import { cn } from "@/lib/utils";
-import { DATE_RANGE_LABELS, type DateRange } from "@/lib/date-range";
+import { type DateRange } from "@/lib/date-range";
+import { DateRangePicker } from "./DateRangePicker";
+import type { DateRangeSelection } from "@/components/layout/AppShell";
 
 export interface ArticleWithFeed {
   id: string;
@@ -35,7 +37,9 @@ interface ArticleListProps {
   onSearchChange: (query: string) => void;
   isSearching: boolean;
   dateRange: DateRange;
-  onDateRangeChange: (range: DateRange) => void;
+  customFrom?: Date;
+  customTo?: Date;
+  onDateRangeChange: (next: DateRangeSelection) => void;
   onMarkAllRead: () => void;
   searchError: string | null;
   hasFeeds: boolean;
@@ -54,6 +58,8 @@ export function ArticleList({
   onSearchChange,
   isSearching,
   dateRange,
+  customFrom,
+  customTo,
   onDateRangeChange,
   onMarkAllRead,
   searchError,
@@ -92,18 +98,12 @@ export function ArticleList({
           {searchQuery ? "Search Results" : heading}
         </h2>
         {!searchQuery && (
-          <select
-            value={dateRange}
-            onChange={(e) => onDateRangeChange(e.target.value as DateRange)}
-            className="ml-auto h-6 rounded border-none bg-transparent text-xs text-muted-foreground hover:text-foreground focus:outline-none focus:ring-0"
-            aria-label="Filter by date"
-          >
-            {(Object.keys(DATE_RANGE_LABELS) as DateRange[]).map((r) => (
-              <option key={r} value={r} className="bg-background">
-                {DATE_RANGE_LABELS[r]}
-              </option>
-            ))}
-          </select>
+          <DateRangePicker
+            range={dateRange}
+            from={customFrom}
+            to={customTo}
+            onChange={onDateRangeChange}
+          />
         )}
         <span
           className={cn(

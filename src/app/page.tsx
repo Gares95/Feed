@@ -6,16 +6,28 @@ import {
   getStarredCount,
   getTotalUnread,
 } from "@/lib/queries";
-import { dateRangeToSince, isDateRange, type DateRange } from "@/lib/date-range";
+import {
+  dateRangeToBounds,
+  isDateRange,
+  parseCustomRangeParam,
+  type DateRange,
+} from "@/lib/date-range";
 
 interface PageProps {
-  searchParams: Promise<{ feedId?: string; starred?: string; range?: string }>;
+  searchParams: Promise<{
+    feedId?: string;
+    starred?: string;
+    range?: string;
+    from?: string;
+    to?: string;
+  }>;
 }
 
 export default async function Home({ searchParams }: PageProps) {
   const params = await searchParams;
   const range: DateRange = isDateRange(params.range) ? params.range : "all";
-  const since = dateRangeToSince(range);
+  const { from, to } = parseCustomRangeParam(params.from, params.to);
+  const { since, until } = dateRangeToBounds(range, from, to);
 
   const [feeds, folders, totalUnread, starredCount, articlePage] = await Promise.all([
     getFeedsWithCounts(),
@@ -23,8 +35,8 @@ export default async function Home({ searchParams }: PageProps) {
     getTotalUnread(),
     getStarredCount(),
     params.starred === "true"
-      ? getArticles({ starredOnly: true, since })
-      : getArticles({ feedId: params.feedId, since }),
+      ? getArticles({ starredOnly: true, since, until })
+      : getArticles({ feedId: params.feedId, since, until }),
   ]);
 
   return (
@@ -39,6 +51,8 @@ export default async function Home({ searchParams }: PageProps) {
       initialStarred={params.starred === "true"}
       initialArticle={null}
       initialDateRange={range}
+      initialFrom={from ?? null}
+      initialTo={to ?? null}
     />
   );
 }

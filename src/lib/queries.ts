@@ -53,13 +53,19 @@ export async function getArticles(options?: {
   feedId?: string;
   starredOnly?: boolean;
   since?: Date;
+  until?: Date;
   cursor?: string;
   limit?: number;
 }): Promise<ArticlePage> {
   const where: Record<string, unknown> = {};
   if (options?.feedId) where.feedId = options.feedId;
   if (options?.starredOnly) where.isStarred = true;
-  if (options?.since) where.publishedAt = { gte: options.since };
+  if (options?.since || options?.until) {
+    where.publishedAt = {
+      ...(options.since && { gte: options.since }),
+      ...(options.until && { lte: options.until }),
+    };
+  }
 
   const limit = options?.limit ?? ARTICLES_PAGE_SIZE;
 

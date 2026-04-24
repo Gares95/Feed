@@ -35,7 +35,7 @@ import { useArticleSearch } from "@/hooks/use-article-search";
 import { useAutoRefresh } from "@/hooks/use-auto-refresh";
 import { useCommandPalette } from "@/hooks/use-command-palette";
 import { useSwipe } from "@/hooks/use-swipe";
-import type { DateRange } from "@/lib/date-range";
+import { formatCustomRangeParam, type DateRange } from "@/lib/date-range";
 import { CommandPalette } from "@/components/CommandPalette";
 
 interface AppShellProps {
@@ -49,6 +49,14 @@ interface AppShellProps {
   initialStarred: boolean;
   initialArticle: ArticleFull | null;
   initialDateRange: DateRange;
+  initialFrom: Date | null;
+  initialTo: Date | null;
+}
+
+export interface DateRangeSelection {
+  range: DateRange;
+  from?: Date;
+  to?: Date;
 }
 
 export function AppShell({
@@ -62,6 +70,8 @@ export function AppShell({
   initialStarred,
   initialArticle,
   initialDateRange,
+  initialFrom,
+  initialTo,
 }: AppShellProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -71,6 +81,12 @@ export function AppShell({
   );
   const [isStarredView, setIsStarredView] = useState(initialStarred);
   const [dateRange, setDateRange] = useState<DateRange>(initialDateRange);
+  const [customFrom, setCustomFrom] = useState<Date | undefined>(
+    initialFrom ?? undefined,
+  );
+  const [customTo, setCustomTo] = useState<Date | undefined>(
+    initialTo ?? undefined,
+  );
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(
     initialArticle?.id ?? null
   );
@@ -108,12 +124,20 @@ export function AppShell({
     feedId?: string | null;
     starred?: boolean;
     range?: DateRange;
+    from?: Date;
+    to?: Date;
   }) {
     const params = new URLSearchParams();
     if (opts.feedId) params.set("feedId", opts.feedId);
     if (opts.starred) params.set("starred", "true");
     const r = opts.range ?? dateRange;
     if (r !== "all") params.set("range", r);
+    if (r === "custom") {
+      const f = opts.from ?? customFrom;
+      const t = opts.to ?? customTo;
+      if (f) params.set("from", formatCustomRangeParam(f));
+      if (t) params.set("to", formatCustomRangeParam(t));
+    }
     const qs = params.toString();
     return qs ? `/?${qs}` : "/";
   }
@@ -142,14 +166,18 @@ export function AppShell({
     });
   }
 
-  function handleDateRangeChange(range: DateRange) {
-    setDateRange(range);
+  function handleDateRangeChange(next: DateRangeSelection) {
+    setDateRange(next.range);
+    setCustomFrom(next.from);
+    setCustomTo(next.to);
     startTransition(() => {
       router.push(
         buildUrl({
           feedId: selectedFeedId,
           starred: isStarredView,
-          range,
+          range: next.range,
+          from: next.from,
+          to: next.to,
         }),
       );
     });
@@ -234,6 +262,8 @@ export function AppShell({
         feedId: selectedFeedId,
         starred: isStarredView,
         range: dateRange,
+        from: customFrom ? formatCustomRangeParam(customFrom) : undefined,
+        to: customTo ? formatCustomRangeParam(customTo) : undefined,
         cursor: nextCursor,
       });
       setArticles((prev) => [...prev, ...page.articles]);
@@ -375,6 +405,8 @@ export function AppShell({
               onSearchChange={search.onChange}
               isSearching={search.isSearching}
               dateRange={dateRange}
+              customFrom={customFrom}
+              customTo={customTo}
               onDateRangeChange={handleDateRangeChange}
               onMarkAllRead={handleMarkAllRead}
               searchError={search.error}
@@ -444,6 +476,8 @@ export function AppShell({
             onSearchChange={search.onChange}
             isSearching={search.isSearching}
             dateRange={dateRange}
+            customFrom={customFrom}
+            customTo={customTo}
             onDateRangeChange={handleDateRangeChange}
             onMarkAllRead={handleMarkAllRead}
             searchError={search.error}

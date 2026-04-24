@@ -7,7 +7,11 @@ import {
   searchArticles as searchArticlesQuery,
   type ArticlePage,
 } from "@/lib/queries";
-import { dateRangeToSince, type DateRange } from "@/lib/date-range";
+import {
+  dateRangeToBounds,
+  parseCustomRangeParam,
+  type DateRange,
+} from "@/lib/date-range";
 
 export async function markRead(articleId: string) {
   await prisma.article.update({
@@ -55,12 +59,17 @@ export async function loadMoreArticles(params: {
   feedId?: string | null;
   starred?: boolean;
   range?: DateRange;
+  from?: string;
+  to?: string;
   cursor: string;
 }): Promise<ArticlePage> {
+  const { from, to } = parseCustomRangeParam(params.from, params.to);
+  const { since, until } = dateRangeToBounds(params.range ?? "all", from, to);
   return getArticles({
     feedId: params.feedId ?? undefined,
     starredOnly: params.starred ?? false,
-    since: dateRangeToSince(params.range ?? "all"),
+    since,
+    until,
     cursor: params.cursor,
   });
 }
