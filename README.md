@@ -139,8 +139,14 @@ The dev and production servers bind to `127.0.0.1` only, so the app is not reach
 
 ## Roadmap
 
-See [`PROJECT_BLUEPRINT.md`](./PROJECT_BLUEPRINT.md) for the full phased roadmap, design tokens, database schema, and architectural rationale. Phases 1–3 (core reader, organization, and reading experience) are complete; Phase 4 (power-user features — highlights, backup/restore, retention, stats) is mostly shipped. AI features are not on the roadmap — see the Anti-Goals section of the blueprint for the reasoning.
+See [`PROJECT_BLUEPRINT.md`](./PROJECT_BLUEPRINT.md) for the full phased roadmap, design tokens, database schema, and architectural rationale. Phases 1–4 (core reader, organization, reading experience, and power-user features) are complete and shipped in v1.0.0. AI features are not on the roadmap — see the Anti-Goals section of the blueprint for the reasoning.
+
+## Variants
+
+This repository is the canonical v1 implementation, built on Tailwind v4 and `@base-ui/react`. Forks will explore alternative UI stacks against the same data layer and feature set, so the implementations can be compared directly.
+
+- _(forks listed here once they exist)_
 
 ## License
 
-Personal project — no license declared.
+MIT — see [`LICENSE`](./LICENSE).
