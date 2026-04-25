@@ -97,10 +97,18 @@ export function AddFeedDialog({ onFeedAdded }: AddFeedDialogProps) {
       }}
     >
       <DialogTrigger
-        render={<Button variant="ghost" size="icon" className="h-7 w-7" />}
-      >
-        <Plus className="h-4 w-4" />
-      </DialogTrigger>
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            aria-label="Add feed"
+            title="Add feed"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Feed</DialogTitle>

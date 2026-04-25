@@ -95,9 +95,10 @@ export function FeedItem({
             onRefresh(id);
           }}
           className="hidden rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground group-hover:block"
+          aria-label={hasError ? "Retry feed" : "Refresh feed"}
           title={hasError ? "Retry feed" : "Refresh feed"}
         >
-          <RefreshCw className="h-4 w-4" />
+          <RefreshCw className="h-4 w-4" aria-hidden="true" />
         </button>
         <button
           type="button"
@@ -106,9 +107,10 @@ export function FeedItem({
             setSettingsOpen(true);
           }}
           className="hidden rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground group-hover:block"
+          aria-label="Feed settings"
           title="Feed settings"
         >
-          <Settings className="h-4 w-4" />
+          <Settings className="h-4 w-4" aria-hidden="true" />
         </button>
         <AlertDialog open={open} onOpenChange={setOpen}>
           <AlertDialogTrigger
@@ -116,9 +118,10 @@ export function FeedItem({
               e.stopPropagation();
             }}
             className="hidden rounded p-0.5 text-muted-foreground hover:bg-destructive/20 hover:text-destructive group-hover:block"
+            aria-label="Delete feed"
             title="Delete feed"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
           </AlertDialogTrigger>
           <AlertDialogContent onClick={(e: React.MouseEvent) => e.stopPropagation()}>
             <AlertDialogHeader>
