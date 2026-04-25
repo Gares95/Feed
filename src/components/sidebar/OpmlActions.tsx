@@ -69,11 +69,12 @@ export function OpmlActions({ onImportComplete }: OpmlActionsProps) {
               size="icon"
               className="h-7 w-7"
               disabled={isImporting}
+              aria-label="Import / Export"
               title="Import / Export"
             />
           }
         >
-          <ArrowDownUp className="h-4 w-4" />
+          <ArrowDownUp className="h-4 w-4" aria-hidden="true" />
         </MenuTrigger>
         <MenuContent>
           <MenuItem onClick={() => fileInputRef.current?.click()}>

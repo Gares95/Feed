@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Newspaper, Star, RefreshCw, FolderPlus, ChevronDown, ChevronRight, Pencil, Trash2, Activity, BarChart3, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { AddFeedDialog } from "./AddFeedDialog";
@@ -118,9 +118,10 @@ export function Sidebar({
             size="icon"
             className="h-7 w-7"
             onClick={handleNewFolder}
+            aria-label="New folder"
             title="New folder"
           >
-            <FolderPlus className="h-4 w-4" />
+            <FolderPlus className="h-4 w-4" aria-hidden="true" />
           </Button>
           <Button
             variant="ghost"
@@ -128,28 +129,48 @@ export function Sidebar({
             className="h-7 w-7"
             onClick={onRefreshAll}
             disabled={isRefreshing}
+            aria-label="Refresh all feeds"
             title="Refresh all feeds"
           >
             <RefreshCw
               className={cn("h-4 w-4", isRefreshing && "animate-spin")}
+              aria-hidden="true"
             />
           </Button>
           <AddFeedDialog onFeedAdded={onFeedAdded} />
           <OpmlActions onImportComplete={onFeedAdded} />
-          <Link href="/health" title="Feed health dashboard">
-            <Button variant="ghost" size="icon" className="h-7 w-7">
-              <Activity className="h-4 w-4" />
-            </Button>
+          <Link
+            href="/health"
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "h-7 w-7",
+            )}
+            aria-label="Feed health dashboard"
+            title="Feed health dashboard"
+          >
+            <Activity className="h-4 w-4" aria-hidden="true" />
           </Link>
-          <Link href="/stats" title="Reading stats">
-            <Button variant="ghost" size="icon" className="h-7 w-7">
-              <BarChart3 className="h-4 w-4" />
-            </Button>
+          <Link
+            href="/stats"
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "h-7 w-7",
+            )}
+            aria-label="Reading stats"
+            title="Reading stats"
+          >
+            <BarChart3 className="h-4 w-4" aria-hidden="true" />
           </Link>
-          <Link href="/settings" title="Settings">
-            <Button variant="ghost" size="icon" className="h-7 w-7">
-              <Settings className="h-4 w-4" />
-            </Button>
+          <Link
+            href="/settings"
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "h-7 w-7",
+            )}
+            aria-label="Settings"
+            title="Settings"
+          >
+            <Settings className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
       </div>
