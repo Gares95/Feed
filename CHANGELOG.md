@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-04-26
+
+### Security
+
+- Override transitive `postcss` inside `next` to `^8.5.10` to clear
+  GHSA-qx2v-qp2m-jg93 (CSS stringify XSS, moderate). Real-world exploit
+  surface in Feed is effectively zero — postcss only runs at build time on
+  project source CSS, and feed content goes through DOMPurify, never postcss.
+  The override keeps `npm audit` clean. `next@15.5.15` is the latest 15.x
+  release and ships an unpatched postcss internally; `next@16.x` is a major
+  upgrade with breaking changes that is intentionally deferred.
+
 ## [1.0.0] - 2026-04-25
 
 First tagged release. Local-first RSS/Atom reader. No cloud, no telemetry,
