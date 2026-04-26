@@ -120,6 +120,30 @@ git push
 git branch -d feature/my-feature      # Clean up local branch
 ```
 
+## Canonical role and downstream patch flow
+
+This repo is the **canonical** Feed implementation. Other repos (currently
+`feed-skill-lab` for design-skill experimentation) are seeded from `v1.0.0`
+and treat this repo as their `upstream` remote. They cherry-pick logic /
+security / dependency fixes from here; their own divergence is bounded
+(e.g., design surface only).
+
+**Implication when fixing bugs in shared surfaces** (server actions, lib/,
+schema, API routes, sanitizer, safe-fetch, retention, feed parsing, search,
+or shared dependency versions):
+
+1. Land the fix on `main` via the normal `fix/...` branch + `--no-ff` merge flow.
+2. Bump the patch version in `package.json` (`1.0.0` → `1.0.1`).
+3. Add a `## [1.0.x] - YYYY-MM-DD` entry to `CHANGELOG.md` describing the fix.
+4. Tag and push: `git tag -a v1.0.x -m "v1.0.x"` then `git push origin v1.0.x`.
+
+Downstream repos pull the fix with `git fetch upstream --tags` and
+`git cherry-pick v1.0.x`. The tag is what makes the fix discoverable and
+unambiguous downstream — without it, downstream has to track SHAs by hand.
+
+This applies to **fixes**, not features. New features stay untagged on `main`
+unless the user explicitly asks for a release.
+
 ## Reference
 
 See `PROJECT_BLUEPRINT.md` for full specification: phased roadmap, detailed design tokens, database schema, keyboard shortcuts, and UI/UX direction.
