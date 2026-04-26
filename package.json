@@ -1,9 +1,14 @@
 {
   "name": "feed",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "A local-first RSS/Atom reader. Runs entirely on your machine, stores everything in a single SQLite file, and requires zero accounts or API keys.",
   "license": "MIT",
+  "overrides": {
+    "next": {
+      "postcss": "^8.5.10"
+    }
+  },
   "scripts": {
     "dev": "next dev --turbopack -H 127.0.0.1",
     "dev:lan": "node -e \"console.error('\\u26a0\\ufe0f  Binding to 0.0.0.0 — API routes have no auth. Put this behind a reverse proxy if anyone else is on the network.')\" && next dev --turbopack -H 0.0.0.0",
