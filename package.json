@@ -1,6 +1,6 @@
 {
   "name": "feed",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "A local-first RSS/Atom reader. Runs entirely on your machine, stores everything in a single SQLite file, and requires zero accounts or API keys.",
   "license": "MIT",
